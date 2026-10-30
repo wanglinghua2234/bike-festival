@@ -48,7 +48,6 @@
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
     }
-    /* Hide scrollbar for tabs */
     .no-scrollbar::-webkit-scrollbar {
       display: none;
     }
@@ -56,7 +55,6 @@
       -ms-overflow-style: none;
       scrollbar-width: none;
     }
-    /* Pulsing glow */
     @keyframes pulseGlow {
       0%, 100% { box-shadow: 0 0 15px rgba(249, 115, 22, 0.4); }
       50% { box-shadow: 0 0 25px rgba(249, 115, 22, 0.8); }
@@ -83,7 +81,7 @@
           <i data-lucide="help-circle" class="w-3.5 h-3.5"></i>
           <span>玩法</span>
         </button>
-        <!-- 測試模擬器按鈕 (受 IS_DEV_MODE 控制，上架設為 false 即會自動隱藏) -->
+        <!-- 測試模擬器按鈕 (受 IS_DEV_MODE 控制) -->
         <button id="devSimulatorBtn" onclick="toggleDevModal()" class="flex items-center gap-1 bg-slate-100 text-slate-600 px-2.5 py-1.5 rounded-full text-xs font-bold border border-slate-200 hover:bg-slate-200 transition active:scale-95" title="快速測試攤位QR">
           <i data-lucide="flask-conical" class="w-3.5 h-3.5 text-indigo-500"></i>
           <span>模擬器</span>
@@ -144,15 +142,11 @@
           </span>
         </div>
         
-        <!-- Status Indicator / Hint -->
         <p id="backpackPrompt" class="text-xs text-slate-500 mb-3">
           尚未收集足夠科系。每掃描一個攤位即可獲得該系全部 3 個關鍵字，至少需要 <strong class="text-orange-600">3 個不同科系</strong> 才能開始造句喔！
         </p>
 
-        <!-- Mini Tags Display -->
-        <div id="quickBackpackPills" class="flex flex-wrap gap-1.5 min-h-[48px] p-2.5 bg-slate-50 rounded-xl border border-slate-100">
-          <!-- Dynamically populated or empty hint -->
-        </div>
+        <div id="quickBackpackPills" class="flex flex-wrap gap-1.5 min-h-[48px] p-2.5 bg-slate-50 rounded-xl border border-slate-100"></div>
 
         <div class="mt-3 flex gap-2">
           <button onclick="switchTab('tab-backpack')" class="flex-1 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition text-center">
@@ -203,16 +197,12 @@
         </button>
       </div>
 
-      <!-- Backpack Rule Reminder -->
       <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2 text-xs text-amber-800">
         <i data-lucide="info" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5"></i>
         <span>造句規則提醒：每張紀念卡必須由 <strong>3 個不同科系</strong> 的關鍵字組合而成。每個科系只能選出一個字詞喔！</span>
       </div>
 
-      <!-- Grouped by Department List -->
-      <div id="backpackFullList" class="space-y-3">
-        <!-- Rendered by JS -->
-      </div>
+      <div id="backpackFullList" class="space-y-3"></div>
     </section>
 
     <!-- TAB 3: 造句工坊 (Sentence Maker) -->
@@ -236,9 +226,7 @@
           <i data-lucide="layout-template" class="w-3.5 h-3.5 text-orange-500"></i>
           選擇句子模板：
         </label>
-        <select id="templateSelect" onchange="handleTemplateChange()" class="w-full text-xs font-semibold bg-slate-50 border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-orange-500 focus:outline-none">
-          <!-- Populated by JS -->
-        </select>
+        <select id="templateSelect" onchange="handleTemplateChange()" class="w-full text-xs font-semibold bg-slate-50 border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-orange-500 focus:outline-none"></select>
       </div>
 
       <!-- 3 Keyword Slots -->
@@ -248,7 +236,6 @@
           <button onclick="resetSelectedSlots()" class="text-[11px] text-slate-400 hover:text-slate-600 underline">清空重選</button>
         </div>
 
-        <!-- The 3 Slots -->
         <div class="grid grid-cols-1 gap-2.5">
           <!-- Slot 1 -->
           <div class="p-2.5 rounded-xl border-2 border-dashed border-orange-300 bg-orange-50/40 flex items-center justify-between">
@@ -300,23 +287,18 @@
           <i data-lucide="eye" class="w-3.5 h-3.5"></i>
           即時預覽效果
         </div>
-        <div id="liveSentenceBox" class="text-sm md:text-base font-bold leading-relaxed tracking-wide min-h-[50px] flex items-center">
-          <!-- Text rendered here -->
-        </div>
+        <div id="liveSentenceBox" class="text-sm md:text-base font-bold leading-relaxed tracking-wide min-h-[50px] flex items-center"></div>
       </div>
 
-      <!-- Keyword Picker Bank from Backpack -->
+      <!-- Keyword Picker Bank -->
       <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
         <div class="flex items-center justify-between mb-2">
           <h3 class="text-xs font-bold text-slate-700">從已解鎖科系中挑選（每系限選 1 個）：</h3>
           <span class="text-[10px] text-slate-400">已解鎖系之 3 個關鍵字全數開放挑選</span>
         </div>
-        <div id="craftKeywordGrid" class="space-y-2.5 max-h-64 overflow-y-auto pr-1">
-          <!-- Populated from Backpack grouped by Department -->
-        </div>
+        <div id="craftKeywordGrid" class="space-y-2.5 max-h-64 overflow-y-auto pr-1"></div>
       </div>
 
-      <!-- Step to Photo Background -->
       <button id="nextToCardBtn" onclick="goToCardCustomization()" disabled class="w-full py-3.5 px-4 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-2xl shadow-lg transition active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
         <span>下一步：拍攝背景照片與合成</span>
         <i data-lucide="arrow-right" class="w-4 h-4"></i>
@@ -382,13 +364,11 @@
       <!-- Card Display Canvas Container -->
       <div class="flex justify-center">
         <div class="w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl border-4 border-white bg-slate-900 relative">
-          <!-- 隱藏原生 Canvas，改由真實 img 標籤呈現，讓任何手機都能直接長按儲存 -->
           <canvas id="cardCanvas" class="hidden"></canvas>
           <img id="cardDisplayImg" alt="你的專屬紀念卡" class="w-full h-auto block rounded-2xl select-auto pointer-events-auto shadow-inner" src="">
         </div>
       </div>
 
-      <!-- 手機長按專屬提示條 -->
       <div class="bg-orange-50 border border-orange-200 rounded-xl p-2.5 text-center text-xs text-orange-800 font-bold flex items-center justify-center gap-1.5 shadow-xs">
         <span>👉</span>
         <span>手機可以直接「長按上方圖片」選「儲存影像」存到相簿！</span>
@@ -401,23 +381,28 @@
           <span>儲存專屬紀念卡 (PNG)</span>
         </button>
 
-        <div class="flex gap-2">
-          <button onclick="shareOrCopyCard()" class="flex-1 py-2.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5">
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="openCardInNewTab()" class="py-2.5 bg-orange-50 border border-orange-200 text-orange-700 hover:bg-orange-100 font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5">
+            <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+            <span>單獨開圖儲存</span>
+          </button>
+          <button onclick="shareOrCopyCard()" class="py-2.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5">
             <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
             <span>分享好句</span>
           </button>
-          <button onclick="restartSentenceMaking()" class="flex-1 py-2.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5">
-            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-orange-500"></i>
-            <span>再做一張名場面</span>
-          </button>
         </div>
+
+        <button onclick="restartSentenceMaking()" class="w-full py-2.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5">
+          <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-orange-500"></i>
+          <span>再做一張名場面</span>
+        </button>
       </div>
 
     </section>
 
   </main>
 
-  <!-- MODAL: 手機端長按儲存備援彈窗 (解決手機/LINE/Safari瀏覽器阻擋下載) -->
+  <!-- MODAL: 手機端長按儲存備援彈窗 -->
   <div id="imageSaveModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex flex-col items-center justify-center p-4">
     <div class="max-w-xs w-full bg-white rounded-3xl p-4 text-center space-y-3 shadow-2xl animate-in fade-in zoom-in-95">
       <div class="flex items-center justify-between border-b pb-2">
@@ -440,29 +425,25 @@
     </div>
   </div>
 
-  <!-- Bottom Floating Tab Bar (Mobile App Style) -->
+  <!-- Bottom Floating Tab Bar -->
   <nav class="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-lg">
     <div class="max-w-md mx-auto grid grid-cols-4 px-2 py-1.5">
-      <!-- Tab Item 1: Scan & Explore -->
       <button onclick="switchTab('tab-scan')" id="nav-tab-scan" class="nav-item flex flex-col items-center justify-center py-1 rounded-xl text-orange-600 font-bold text-[10px] transition">
         <i data-lucide="compass" class="w-5 h-5 mb-0.5"></i>
         <span>出發收集</span>
       </button>
 
-      <!-- Tab Item 2: Backpack -->
       <button onclick="switchTab('tab-backpack')" id="nav-tab-backpack" class="nav-item flex flex-col items-center justify-center py-1 rounded-xl text-slate-400 font-bold text-[10px] relative transition">
         <i data-lucide="backpack" class="w-5 h-5 mb-0.5"></i>
         <span>背包清單</span>
         <span id="navBackpackDot" class="hidden absolute top-1 right-6 w-2 h-2 rounded-full bg-orange-500"></span>
       </button>
 
-      <!-- Tab Item 3: Sentence Maker -->
       <button onclick="switchTab('tab-craft')" id="nav-tab-craft" class="nav-item flex flex-col items-center justify-center py-1 rounded-xl text-slate-400 font-bold text-[10px] transition">
         <i data-lucide="sparkles" class="w-5 h-5 mb-0.5"></i>
         <span>造句工坊</span>
       </button>
 
-      <!-- Tab Item 4: Card Result -->
       <button onclick="switchTab('tab-card')" id="nav-tab-card" class="nav-item flex flex-col items-center justify-center py-1 rounded-xl text-slate-400 font-bold text-[10px] transition">
         <i data-lucide="award" class="w-5 h-5 mb-0.5"></i>
         <span>專屬名場面</span>
@@ -534,7 +515,7 @@
     </div>
   </div>
 
-  <!-- MODAL 2: 攤位 QR 測試模擬器 (主辦測試專用) -->
+  <!-- MODAL 2: 攤位 QR 測試模擬器 -->
   <div id="devModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-sm w-full max-h-[85vh] overflow-y-auto p-5 text-slate-800 space-y-4 shadow-2xl relative">
       <div class="flex items-center justify-between border-b pb-2">
@@ -552,14 +533,12 @@
 
       <div class="space-y-3">
         <p class="text-xs text-slate-600">點選以下科系進行一鍵解鎖：</p>
-        <div id="devDeptList" class="space-y-2.5 max-h-[50vh] overflow-y-auto pr-1">
-          <!-- Populated by JS -->
-        </div>
+        <div id="devDeptList" class="space-y-2.5 max-h-[50vh] overflow-y-auto pr-1"></div>
       </div>
     </div>
   </div>
 
-  <!-- MODAL: QR Code 攤位產生器預覽 (主辦列印備用) -->
+  <!-- MODAL: QR Code 攤位產生器預覽 -->
   <div id="qrPrintModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-sm w-full max-h-[85vh] overflow-y-auto p-5 text-slate-800 space-y-4 shadow-2xl relative">
       <div class="flex items-center justify-between border-b pb-2">
@@ -575,13 +554,11 @@
         製作實體 QR Code 時，請將 QR Code 內容設為此網頁網址並帶上科系參數，例如：<br>
         <code id="sampleQrUrl" class="block bg-slate-100 p-2 rounded-lg text-[11px] text-orange-600 mt-1 break-all font-mono">https://你的網址/?dept=fllo</code>
       </p>
-      <div id="allDeptsQrInfo" class="space-y-2 max-h-60 overflow-y-auto text-xs">
-        <!-- JS 產生 47 系代碼清單 -->
-      </div>
+      <div id="allDeptsQrInfo" class="space-y-2 max-h-60 overflow-y-auto text-xs"></div>
     </div>
   </div>
 
-  <!-- MODAL 3: 收集成功彈跳視窗 (Success Pop-up 一次獲得三個) -->
+  <!-- MODAL 3: 收集成功彈跳視窗 -->
   <div id="collectedSuccessModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-xs w-full p-6 text-center shadow-2xl space-y-4 transform animate-in fade-in zoom-in-95">
       <div class="w-16 h-16 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-3xl mx-auto shadow-inner">
@@ -590,9 +567,7 @@
       <div>
         <h3 class="text-lg font-black text-slate-900">收集成功！</h3>
         <p class="text-xs text-slate-500 mt-1">你一次獲得了【<span id="collectedDeptName" class="font-bold text-orange-600"></span>】的全部 3 個關鍵字：</p>
-        <div id="collectedKeywordsList" class="mt-3 flex flex-col gap-1.5">
-          <!-- Render 3 keywords pills -->
-        </div>
+        <div id="collectedKeywordsList" class="mt-3 flex flex-col gap-1.5"></div>
       </div>
       <div class="pt-2 flex flex-col gap-2">
         <button onclick="dismissSuccessModal()" class="w-full py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-xl text-xs transition">
@@ -616,8 +591,6 @@
     /* =====================================================================
        0. 環境控制開關 (正式上架請將此處改為 false)
        ===================================================================== */
-    // true: 測試模式（顯示右上角模擬器）
-    // false: 正式上架模式（模擬器按鈕完全隱藏，一般玩家看不到）
     const IS_DEV_MODE = true;
 
     /* =====================================================================
@@ -625,7 +598,6 @@
        ===================================================================== */
     const STORAGE_KEY = "bike_festival_backpack_v2";
 
-    // 47 科系資料結構（已為您建立好成大 47 系架構，您可直接修改 keywords 內容）
     const DEPARTMENT_DATA = [
       // 文學院
       { id: "cl", name: "中文系", category: "文學院", keywords: ["說文解字", "孔子迷因", "筆墨春秋"] },
@@ -689,7 +661,6 @@
       { id: "dent", name: "牙醫系", category: "醫學院", keywords: ["雕齒工藝家", "牙齒雕刻王", "微笑設計師"] }
     ];
 
-    // 句子模板清單
     const SENTENCE_TEMPLATES = [
       {
         id: "tmpl_1",
@@ -713,26 +684,24 @@
       }
     ];
 
-    // 三個關鍵字膠囊的視覺色彩配置
     const KEYWORD_COLORS = [
-      { bg: "#f97316", text: "#ffffff" }, // 橘色 (Slot 1)
-      { bg: "#06b6d4", text: "#ffffff" }, // 青藍 (Slot 2)
-      { bg: "#a855f7", text: "#ffffff" }  // 亮紫 (Slot 3)
+      { bg: "#f97316", text: "#ffffff" },
+      { bg: "#06b6d4", text: "#ffffff" },
+      { bg: "#a855f7", text: "#ffffff" }
     ];
 
     /* =====================================================================
        2. 核心全域狀態 (State Management)
        ===================================================================== */
     const state = {
-      backpack: [], // [{ deptId, deptName, keyword, acquiredAt }]
-      selectedSlots: [null, null, null], // 3 個槽位：選取之 { deptId, deptName, keyword }
+      backpack: [],
+      selectedSlots: [null, null, null],
       selectedTemplateIndex: 0,
       isScannerActive: false,
       html5QrScanner: null,
       cardBackgroundImage: null
     };
 
-    // 本地儲存讀寫
     function loadBackpackFromStorage() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
@@ -754,9 +723,8 @@
     }
 
     /* =====================================================================
-       3. 掃描與收集關鍵字邏輯 (一次掃描解鎖全系 3 個關鍵字)
+       3. 掃描與收集關鍵字邏輯
        ===================================================================== */
-    // 檢查網址參數自動收集 (例如掃現場 QR 碼開啟：https://yourdomain/?dept=chem)
     function checkUrlParametersForAutoCollect() {
       const urlParams = new URLSearchParams(window.location.search);
       const deptId = urlParams.get("dept");
@@ -770,12 +738,7 @@
       }
     }
 
-    // 核心收集函式：一次解鎖該系全部 3 個關鍵字
     function collectDepartmentAllKeywords(deptId, deptName, keywords) {
-      // 檢查背包中是否已有此科系
-      const alreadyCollected = state.backpack.some(item => item.deptId === deptId);
-
-      // 篩選出尚未收錄的字
       const newItems = [];
       keywords.forEach(kw => {
         if (!state.backpack.some(item => item.deptId === deptId && item.keyword === kw)) {
@@ -798,7 +761,6 @@
       renderBackpackUI();
       renderCraftUI();
 
-      // 彈跳視窗一次展示該系 3 個關鍵字
       showCollectedModal(deptName, keywords);
 
       try {
@@ -859,13 +821,10 @@
         { facingMode: "environment" },
         config,
         (decodedText) => {
-          // 掃描成功回呼
           handleDecodedQr(decodedText);
           stopCameraScanner();
         },
-        (errorMessage) => {
-          // 掃描中幀數無條碼，正常忽略
-        }
+        () => {}
       ).then(() => {
         state.isScannerActive = true;
       }).catch(err => {
@@ -890,23 +849,17 @@
       btnText.innerText = "開啟相機";
     }
 
-    // 解析 QR Code 內容
     function handleDecodedQr(rawText) {
       try {
         let deptId = null;
 
-        // 情況 A：網址型 QR 碼
         if (rawText.startsWith("http://") || rawText.startsWith("https://")) {
           const url = new URL(rawText);
           deptId = url.searchParams.get("dept");
-        } 
-        // 情況 B：JSON 格式 {"dept":"chem"}
-        else if (rawText.startsWith("{")) {
+        } else if (rawText.startsWith("{")) {
           const data = JSON.parse(rawText);
           deptId = data.dept;
-        } 
-        // 情況 C：純代碼或包含冒號
-        else {
+        } else {
           deptId = rawText.split(":")[0].trim();
         }
 
@@ -1008,7 +961,6 @@
       const navDot = document.getElementById("navBackpackDot");
       const prompt = document.getElementById("backpackPrompt");
 
-      // 計算收集到的相異科系數目
       const uniqueDepts = new Set(state.backpack.map(item => item.deptId));
       countBadge.innerText = `已收集 ${uniqueDepts.size} 個系 (${state.backpack.length} 個詞)`;
 
@@ -1018,7 +970,6 @@
         navDot.classList.add("hidden");
       }
 
-      // 是否達標 3 系
       if (uniqueDepts.size >= 3) {
         goCraftBtn.disabled = false;
         goCraftBtn.classList.remove("bg-slate-300", "cursor-not-allowed");
@@ -1031,7 +982,6 @@
         prompt.innerHTML = `每掃一系即可獲取 3 個關鍵字，還差 <strong class="text-orange-600">${3 - uniqueDepts.size} 個不同科系</strong> 即可開始造句！`;
       }
 
-      // 快速小標籤 (首頁 Tab 1)
       if (state.backpack.length === 0) {
         quickPills.innerHTML = `<span class="text-xs text-slate-400 py-1">背包目前空空如也，趕緊去逛攤位吧！</span>`;
       } else {
@@ -1043,7 +993,6 @@
         `).join('');
       }
 
-      // 完整清單 (Tab 2：依科系完整陳列全部 3 個詞)
       if (state.backpack.length === 0) {
         fullList.innerHTML = `
           <div class="text-center py-12 bg-white rounded-2xl border border-dashed border-slate-300 p-6">
@@ -1085,16 +1034,8 @@
             </div>
           </div>
         `).join('');
-        lucide.createIcons();
+        if (window.lucide) lucide.createIcons();
       }
-    }
-
-    function removeItemFromBackpack(deptId, keyword) {
-      state.backpack = state.backpack.filter(it => !(it.deptId === deptId && it.keyword === keyword));
-      state.selectedSlots = state.selectedSlots.map(s => (s && s.deptId === deptId && s.keyword === keyword) ? null : s);
-      saveBackpackToStorage();
-      renderAllTabs();
-      showToast("已從背包移除關鍵字");
     }
 
     function openResetConfirmModal() {
@@ -1104,7 +1045,7 @@
       }
       const modal = document.getElementById("resetConfirmModal");
       modal.classList.remove("hidden");
-      lucide.createIcons();
+      if (window.lucide) lucide.createIcons();
     }
 
     function closeResetConfirmModal() {
@@ -1121,7 +1062,7 @@
     }
 
     /* =====================================================================
-       7. 造句工坊邏輯 (Sentence Maker & Department Constraint)
+       7. 造句工坊邏輯
        ===================================================================== */
     function populateTemplateDropdown() {
       const select = document.getElementById("templateSelect");
@@ -1136,30 +1077,25 @@
       updateSentencePreview();
     }
 
-    // 點擊候選關鍵字放入槽位 (嚴格檢查：句子中每個科系的關鍵字只能出現一個且一次)
     function pickKeywordForCraft(deptId, deptName, keyword) {
-      // 1. 檢查是否已經在槽位中
       const alreadyPickedIndex = state.selectedSlots.findIndex(s => s && s.deptId === deptId && s.keyword === keyword);
       if (alreadyPickedIndex !== -1) {
         removeSlot(alreadyPickedIndex);
         return;
       }
 
-      // 2. 核心規則檢查：同科系只能出現一次！
       const sameDeptIndex = state.selectedSlots.findIndex(s => s && s.deptId === deptId);
       if (sameDeptIndex !== -1) {
         showToast(`⚠️ 規則提醒：每系只能選一個！已選過【${deptName}】的「${state.selectedSlots[sameDeptIndex].keyword}」`);
         return;
       }
 
-      // 3. 尋找空槽位填入 (Slot 1 -> Slot 2 -> Slot 3)
       const emptySlotIndex = state.selectedSlots.findIndex(s => s === null);
       if (emptySlotIndex === -1) {
         showToast("3 個槽位已滿！請先點擊 X 移除某個關鍵字，或點「清空重選」。");
         return;
       }
 
-      // 填入
       state.selectedSlots[emptySlotIndex] = { deptId, deptName, keyword };
       renderCraftUI();
     }
@@ -1176,7 +1112,6 @@
     }
 
     function randomizeSentence() {
-      // 依科系分類背包中的關鍵字
       const byDept = {};
       state.backpack.forEach(item => {
         if (!byDept[item.deptId]) byDept[item.deptId] = [];
@@ -1189,7 +1124,6 @@
         return;
       }
 
-      // 一鍵隨機挑選 3 個不同系的關鍵字
       const shuffledDepts = [...deptKeys].sort(() => 0.5 - Math.random()).slice(0, 3);
       state.selectedSlots = shuffledDepts.map(dId => {
         const items = byDept[dId];
@@ -1204,7 +1138,6 @@
     }
 
     function renderCraftUI() {
-      // 更新 3 個槽位顯示
       for (let i = 0; i < 3; i++) {
         const item = state.selectedSlots[i];
         const textEl = document.getElementById(`slot${i + 1}-text`);
@@ -1220,12 +1153,10 @@
         }
       }
 
-      // 更新造句工坊底部的關鍵字選擇區：完整呈現每個已解鎖科系的 3 個字
       const grid = document.getElementById("craftKeywordGrid");
       if (state.backpack.length === 0) {
         grid.innerHTML = `<span class="text-xs text-slate-400 py-3">背包目前沒有任何科系關鍵字，請先到各系攤位收集！</span>`;
       } else {
-        // 依科系分組
         const grouped = {};
         state.backpack.forEach(item => {
           if (!grouped[item.deptId]) {
@@ -1235,7 +1166,6 @@
         });
 
         grid.innerHTML = Object.entries(grouped).map(([deptId, data]) => {
-          // 檢查這個系是否已經有字詞被選入任何一個槽位
           const chosenSlotIndex = state.selectedSlots.findIndex(s => s && s.deptId === deptId);
           const hasChosenThisDept = chosenSlotIndex !== -1;
           const chosenKeyword = hasChosenThisDept ? state.selectedSlots[chosenSlotIndex].keyword : null;
@@ -1280,10 +1210,8 @@
         }).join('');
       }
 
-      // 更新即時句子預覽
       updateSentencePreview();
 
-      // 檢查是否滿 3 個不同系關鍵字以啟用「下一步」按鈕
       const isComplete = state.selectedSlots.every(s => s !== null);
       const nextBtn = document.getElementById("nextToCardBtn");
       nextBtn.disabled = !isComplete;
@@ -1316,42 +1244,33 @@
     /* =====================================================================
        8. 紀念卡繪製與合成 (HTML5 Canvas Engine)
        ===================================================================== */
-    // 預設成大單車節官方漸層底圖
-    function createDefaultCardBackground() {
-      const bgCanvas = document.createElement("canvas");
-      bgCanvas.width = 1080;
-      bgCanvas.height = 1350;
-      const ctx = bgCanvas.getContext("2d");
-
-      // 質感活力漸層
-      const grad = ctx.createLinearGradient(0, 0, 1080, 1350);
-      grad.addColorStop(0, "#ea580c"); // bike orange
-      grad.addColorStop(0.4, "#0f172a"); // deep dark
-      grad.addColorStop(1, "#1e1b4b"); // indigo
+    function drawDefaultThemeDirectly(ctx, width, height) {
+      const grad = ctx.createLinearGradient(0, 0, width, height);
+      grad.addColorStop(0, "#ea580c");   // 頂部活力橘
+      grad.addColorStop(0.4, "#0f172a"); // 中段深色夜空黑
+      grad.addColorStop(1, "#1e1b4b");   // 底部深夜紫藍
       ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, 1080, 1350);
+      ctx.fillRect(0, 0, width, height);
 
-      // 幾何單車裝飾線條
+      // 裝飾同心圓線條
       ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
       ctx.lineWidth = 4;
       for (let i = 0; i < 8; i++) {
         ctx.beginPath();
-        ctx.arc(540, 675, 120 + i * 80, 0, Math.PI * 2);
+        ctx.arc(width / 2, height / 2, 120 + i * 80, 0, Math.PI * 2);
         ctx.stroke();
       }
 
-      // 單車剪影小圖示
+      // 裝飾單車剪影符號
       ctx.fillStyle = "rgba(255, 255, 255, 0.12)";
       ctx.font = "180px 'Noto Sans TC', sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText("🚲", 540, 500);
+      ctx.fillText("🚲", width / 2, 500);
+    }
 
-      const img = new Image();
-      img.src = bgCanvas.toDataURL("image/png");
-      img.onload = () => {
-        state.cardBackgroundImage = img;
-        updateCardCanvas();
-      };
+    function createDefaultCardBackground() {
+      state.cardBackgroundImage = null;
+      updateCardCanvas();
     }
 
     function handlePhotoUpload(event) {
@@ -1376,7 +1295,9 @@
       showToast("已套用單車節限定主題底圖");
     }
 
-    // 重新繪製整個紀念卡畫布 (高解析度 1080 x 1350, 4:5 比例拍立得海報)
+    let currentCardBlobUrl = null;
+
+    // 重新繪製整個紀念卡畫布 (高解析度 1080 x 1350)
     function updateCardCanvas() {
       const canvas = document.getElementById("cardCanvas");
       if (!canvas) return;
@@ -1400,7 +1321,7 @@
         document.getElementById("blurVal").innerText = blur + "px";
       }
 
-      // 1. 繪製背景 (支援 Cover 比例填滿)
+      // 1. 繪製背景
       if (state.cardBackgroundImage) {
         ctx.save();
         if (blur > 0) {
@@ -1409,15 +1330,13 @@
         drawCoverImage(ctx, state.cardBackgroundImage, 0, 0, width, height);
         ctx.restore();
       } else {
-        ctx.fillStyle = "#1e293b";
-        ctx.fillRect(0, 0, width, height);
+        drawDefaultThemeDirectly(ctx, width, height);
       }
 
-      // 2. 疊加遮罩與對比漸層以保護文字可讀性
+      // 2. 疊加遮罩與對比漸層
       ctx.fillStyle = `rgba(15, 23, 42, ${darkness})`;
       ctx.fillRect(0, 0, width, height);
 
-      // 上下專屬漸層
       const vGrad = ctx.createLinearGradient(0, 0, 0, height);
       vGrad.addColorStop(0, "rgba(0,0,0,0.6)");
       vGrad.addColorStop(0.3, "rgba(0,0,0,0.2)");
@@ -1426,7 +1345,7 @@
       ctx.fillStyle = vGrad;
       ctx.fillRect(0, 0, width, height);
 
-      // 3. 卡片外框與拍立得邊緣裝飾
+      // 3. 卡片外框裝飾
       ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
       ctx.lineWidth = 14;
       ctx.strokeRect(30, 30, width - 60, height - 60);
@@ -1435,21 +1354,18 @@
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
 
-      // 標章 Pill
       drawRoundedRect(ctx, width / 2 - 190, 80, 380, 56, 28, "rgba(255,255,255,0.18)", "rgba(255,255,255,0.4)", 2);
       ctx.fillStyle = "#ffedd5";
       ctx.font = "bold 26px 'Noto Sans TC', sans-serif";
       ctx.fillText("🚲 2026 成大單車節限定活動", width / 2, 108);
 
-      // 大標題：我的單車節名場面
       ctx.fillStyle = "#ffffff";
       ctx.font = "900 68px 'Noto Sans TC', sans-serif";
       ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
       ctx.shadowBlur = 20;
       ctx.fillText("我的單車節名場面", width / 2, 210);
-      ctx.shadowBlur = 0; // 重設陰影
+      ctx.shadowBlur = 0;
 
-      // 裝飾副標線條
       ctx.strokeStyle = "#f97316";
       ctx.lineWidth = 6;
       ctx.beginPath();
@@ -1457,13 +1373,12 @@
       ctx.lineTo(width / 2 + 120, 260);
       ctx.stroke();
 
-      // 5. 核心文字排版（包含 3 個不同顏色的關鍵字膠囊）
+      // 5. 核心文字排版
       drawSentenceOnCard(ctx, width, height);
 
-      // 6. 底部 Footer 文案與兌換認證
+      // 6. 底部 Footer 文案 (保證完全水平置中)
       const footerY = height - 160;
 
-      // 拍立得底部分隔線
       ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -1471,37 +1386,38 @@
       ctx.lineTo(width - 60, footerY);
       ctx.stroke();
 
-      // 文案：🚲 單車節限定・我的專屬紀念卡
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+
       ctx.fillStyle = "#fdba74";
       ctx.font = "bold 34px 'Noto Sans TC', sans-serif";
       ctx.fillText("🚲 單車節限定・我的專屬紀念卡", width / 2, footerY + 45);
 
-      // 保留所屬科系足跡（外文系 × 化學系 × 電機系），移除兌換禮物字眼
       const kwSources = state.selectedSlots.filter(Boolean).map(s => s.deptName).join(" × ");
       ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
       ctx.font = "bold 24px 'Noto Sans TC', sans-serif";
       ctx.fillText(`系所足跡：${kwSources || "成大科系"}`, width / 2, footerY + 90);
 
-      // 同步輸出至可長按儲存的真實 <img> 元素
-      try {
-        const dataUrl = canvas.toDataURL("image/png");
+      // 輸出為可長按儲存的 Blob Object URL
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        if (currentCardBlobUrl) {
+          URL.revokeObjectURL(currentCardBlobUrl);
+        }
+        currentCardBlobUrl = URL.createObjectURL(blob);
         const displayImg = document.getElementById("cardDisplayImg");
         if (displayImg) {
-          displayImg.src = dataUrl;
+          displayImg.src = currentCardBlobUrl;
         }
-      } catch (err) {
-        console.error("同步圖片失敗", err);
-      }
+      }, "image/png");
     }
 
-    // 在卡片中心精緻排版長句子與多色標籤
     function drawSentenceOnCard(ctx, canvasWidth, canvasHeight) {
       const tmpl = SENTENCE_TEMPLATES[state.selectedTemplateIndex];
       const slot0 = state.selectedSlots[0] ? state.selectedSlots[0].keyword : "關鍵字一";
       const slot1 = state.selectedSlots[1] ? state.selectedSlots[1].keyword : "關鍵字二";
       const slot2 = state.selectedSlots[2] ? state.selectedSlots[2].keyword : "關鍵字三";
 
-      // 準備句子區段 (純文字與關鍵字相間)
       const segments = [
         { type: "text", content: tmpl.parts[0] },
         { type: "keyword", content: slot0, color: KEYWORD_COLORS[0] },
@@ -1512,7 +1428,6 @@
         { type: "text", content: tmpl.parts[3] }
       ];
 
-      // 計算換行與排版 (Auto-wrapping with Pills)
       const maxLineWidth = 880;
       const fontSize = 42;
       ctx.font = `bold ${fontSize}px 'Noto Sans TC', sans-serif`;
@@ -1523,7 +1438,6 @@
 
       segments.forEach(seg => {
         if (seg.type === "text") {
-          // 逐字量測以支援換行
           const chars = seg.content.split("");
           let wordBuf = "";
           chars.forEach(ch => {
@@ -1544,8 +1458,7 @@
             currentLine.push({ type: "text", content: wordBuf, width: ctx.measureText(wordBuf).width });
           }
         } else {
-          // 關鍵字膠囊 (計算膠囊內距與文字寬度)
-          const kwWidth = ctx.measureText(seg.content).width + 36; // 左右 padding
+          const kwWidth = ctx.measureText(seg.content).width + 36;
           if (currentLineWidth + kwWidth > maxLineWidth && currentLineWidth > 0) {
             lines.push({ items: currentLine, width: currentLineWidth });
             currentLine = [];
@@ -1559,12 +1472,10 @@
         lines.push({ items: currentLine, width: currentLineWidth });
       }
 
-      // 繪製多行內容 (垂直置中於中央區域)
       const lineHeight = 88;
       const totalBlockHeight = lines.length * lineHeight;
       const startY = 400 + (650 - totalBlockHeight) / 2;
 
-      // 繪製背景裝飾磨砂框
       const boxPadY = 40;
       drawRoundedRect(
         ctx,
@@ -1578,7 +1489,6 @@
         2
       );
 
-      // 開始渲染每一行的各個片段
       lines.forEach((line, lineIdx) => {
         const y = startY + lineIdx * lineHeight + lineHeight / 2;
         let startX = (canvasWidth - line.width) / 2;
@@ -1595,12 +1505,10 @@
             ctx.shadowBlur = 0;
             startX += item.width;
           } else {
-            // 繪製關鍵字彩色徽章膠囊
             const pillH = 58;
             const pillY = y - pillH / 2;
             drawRoundedRect(ctx, startX + 4, pillY, item.width - 8, pillH, pillH / 2, item.color.bg, "rgba(255,255,255,0.7)", 2.5);
 
-            // 膠囊文字
             ctx.fillStyle = item.color.text;
             ctx.font = `900 ${fontSize - 2}px 'Noto Sans TC', sans-serif`;
             ctx.textAlign = "center";
@@ -1613,7 +1521,6 @@
       });
     }
 
-    // 圓角矩形 Helper
     function drawRoundedRect(ctx, x, y, width, height, radius, fillStyle, strokeStyle, strokeWidth) {
       ctx.save();
       ctx.beginPath();
@@ -1640,7 +1547,6 @@
       ctx.restore();
     }
 
-    // 圖片 Cover 比例繪製 Helper
     function drawCoverImage(ctx, img, x, y, w, h) {
       const imgRatio = img.width / img.height;
       const targetRatio = w / h;
@@ -1660,64 +1566,73 @@
       ctx.drawImage(img, sX, sY, sW, sH, x, y, w, h);
     }
 
-    // 關閉手機長按儲存視窗
     function closeImageSaveModal() {
       document.getElementById("imageSaveModal").classList.add("hidden");
     }
 
-    // 下載紀念卡 PNG (升級跨裝置與手機相容版)
+    function openCardInNewTab() {
+      if (!currentCardBlobUrl) {
+        showToast("紀念卡正在生成中，請稍候...");
+        return;
+      }
+      window.open(currentCardBlobUrl, "_blank");
+    }
+
     async function downloadCardImage() {
       const canvas = document.getElementById("cardCanvas");
       if (!canvas) return;
 
       const timestamp = new Date().toISOString().slice(0, 10);
       const fileName = `單車節名場面_${timestamp}.png`;
-      const dataUrl = canvas.toDataURL("image/png");
 
-      // 1. 嘗試使用現代 Web Share API（手機最友善，能直接選「儲存影像」或 AirDrop / LINE）
-      if (navigator.share) {
-        try {
-          const blob = await (await fetch(dataUrl)).blob();
-          const file = new File([blob], fileName, { type: "image/png" });
-          if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({
-              files: [file],
-              title: "我的單車節名場面",
-              text: "我在成大單車節製作的專屬紀念卡！"
-            });
-            showToast("🎉 已儲存/分享成功！");
-            triggerConfetti();
-            return;
-          }
-        } catch (err) {
-          if (err.name === "AbortError") return; // 使用者主動按取消
-          console.log("Share API 未支援檔案，切換下一步", err);
+      canvas.toBlob(async (blob) => {
+        if (!blob) {
+          showToast("圖片生成中，請稍候再試");
+          return;
         }
-      }
 
-      // 2. 電腦版或支援點擊下載的瀏覽器：透過隱藏 a 標籤觸發
-      try {
-        const link = document.createElement("a");
-        link.href = dataUrl;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      } catch (e) {
-        console.log("下載點擊受阻", e);
-      }
+        if (navigator.share) {
+          try {
+            const file = new File([blob], fileName, { type: "image/png" });
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+              await navigator.share({
+                files: [file],
+                title: "我的單車節名場面",
+                text: "我在成大單車節製作的專屬紀念卡！"
+              });
+              showToast("🎉 已儲存成功！");
+              triggerConfetti();
+              return;
+            }
+          } catch (err) {
+            if (err.name === "AbortError") return;
+          }
+        }
 
-      // 3. 一律主動打開全螢幕大圖彈窗（終極防護：任何人都能長按儲存）
-      const modal = document.getElementById("imageSaveModal");
-      const modalImg = document.getElementById("modalPreviewImg");
-      if (modal && modalImg) {
-        modalImg.src = dataUrl;
-        modal.classList.remove("hidden");
-        if (window.lucide) lucide.createIcons();
-      }
+        try {
+          const downloadUrl = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = downloadUrl;
+          link.download = fileName;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          setTimeout(() => URL.revokeObjectURL(downloadUrl), 3000);
+        } catch (e) {
+          console.log("下載攔截", e);
+        }
 
-      showToast("📸 請長按圖片即可儲存到手機相簿！");
-      triggerConfetti();
+        const modal = document.getElementById("imageSaveModal");
+        const modalImg = document.getElementById("modalPreviewImg");
+        if (modal && modalImg) {
+          modalImg.src = currentCardBlobUrl;
+          modal.classList.remove("hidden");
+          if (window.lucide) lucide.createIcons();
+        }
+
+        showToast("📸 請長按圖片即可儲存到手機相簿！");
+        triggerConfetti();
+      }, "image/png");
     }
 
     function triggerConfetti() {
@@ -1730,7 +1645,6 @@
       } catch (e) {}
     }
 
-    // 分享或複製
     function shareOrCopyCard() {
       const tmpl = SENTENCE_TEMPLATES[state.selectedTemplateIndex];
       const s0 = state.selectedSlots[0]?.keyword || "";
@@ -1739,7 +1653,6 @@
       const sentenceText = `${tmpl.parts[0]}【${s0}】${tmpl.parts[1]}【${s1}】${tmpl.parts[2]}【${s2}】${tmpl.parts[3]}`;
       const copyText = `🚲 我的成大單車節名場面：\n「${sentenceText}」\n快來單車節收集關鍵字，拼出你的名場面！`;
 
-      // 複製到剪貼簿 (跨相容語法)
       const tempInput = document.createElement("textarea");
       tempInput.value = copyText;
       document.body.appendChild(tempInput);
@@ -1753,7 +1666,6 @@
       document.body.removeChild(tempInput);
     }
 
-    // 再做一張名場面 (保留背包內容)
     function restartSentenceMaking() {
       state.selectedSlots = [null, null, null];
       switchTab("tab-craft");
@@ -1765,24 +1677,20 @@
        9. 頁籤切換與視窗控制 (Tabs, Modals, Toasts)
        ===================================================================== */
     function switchTab(targetTabId) {
-      // 停止相機掃描以節省電量
       if (state.isScannerActive && targetTabId !== "tab-scan") {
         stopCameraScanner();
       }
 
-      // 隱藏所有頁面
       document.querySelectorAll(".tab-page").forEach(page => {
         page.classList.add("hidden");
       });
 
-      // 顯示目標頁
       const activePage = document.getElementById(targetTabId);
       if (activePage) {
         activePage.classList.remove("hidden");
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
 
-      // 更新下方導航樣式
       document.querySelectorAll(".nav-item").forEach(item => {
         item.classList.remove("text-orange-600");
         item.classList.add("text-slate-400");
@@ -1803,7 +1711,6 @@
       renderCraftUI();
     }
 
-    // Modal 控制
     function openRulesModal() {
       document.getElementById("rulesModal").classList.remove("hidden");
     }
@@ -1811,7 +1718,6 @@
       document.getElementById("rulesModal").classList.add("hidden");
     }
 
-    // 輕量 Toast 提示
     let toastTimeout;
     function showToast(message) {
       const toast = document.getElementById("toast");
@@ -1831,10 +1737,8 @@
     /* =====================================================================
        10. 頁面初始化
        ===================================================================== */
-    // 檢查是否顯示測試模擬器
     function initDevModeControl() {
       const urlParams = new URLSearchParams(window.location.search);
-      // 若 IS_DEV_MODE 為 true，或者網址帶有管理暗號 (例如 ?dev=1 或 ?test=true) 則開放
       const enableDev = IS_DEV_MODE || urlParams.get("dev") === "1" || urlParams.get("test") === "true";
       const devBtn = document.getElementById("devSimulatorBtn");
       
