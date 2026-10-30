@@ -382,9 +382,16 @@
       <!-- Card Display Canvas Container -->
       <div class="flex justify-center">
         <div class="w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl border-4 border-white bg-slate-900 relative">
-          <!-- Canvas where composite image is drawn -->
-          <canvas id="cardCanvas" class="w-full h-auto block rounded-2xl"></canvas>
+          <!-- 隱藏原生 Canvas，改由真實 img 標籤呈現，讓任何手機都能直接長按儲存 -->
+          <canvas id="cardCanvas" class="hidden"></canvas>
+          <img id="cardDisplayImg" alt="你的專屬紀念卡" class="w-full h-auto block rounded-2xl select-auto pointer-events-auto shadow-inner" src="">
         </div>
+      </div>
+
+      <!-- 手機長按專屬提示條 -->
+      <div class="bg-orange-50 border border-orange-200 rounded-xl p-2.5 text-center text-xs text-orange-800 font-bold flex items-center justify-center gap-1.5 shadow-xs">
+        <span>👉</span>
+        <span>手機可以直接「長按上方圖片」選「儲存影像」存到相簿！</span>
       </div>
 
       <!-- Download & Action Buttons -->
@@ -1474,6 +1481,17 @@
       ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
       ctx.font = "bold 24px 'Noto Sans TC', sans-serif";
       ctx.fillText(`系所足跡：${kwSources || "成大科系"}`, width / 2, footerY + 90);
+
+      // 同步輸出至可長按儲存的真實 <img> 元素
+      try {
+        const dataUrl = canvas.toDataURL("image/png");
+        const displayImg = document.getElementById("cardDisplayImg");
+        if (displayImg) {
+          displayImg.src = dataUrl;
+        }
+      } catch (err) {
+        console.error("同步圖片失敗", err);
+      }
     }
 
     // 在卡片中心精緻排版長句子與多色標籤
@@ -1654,71 +1672,52 @@
 
       const timestamp = new Date().toISOString().slice(0, 10);
       const fileName = `單車節名場面_${timestamp}.png`;
+      const dataUrl = canvas.toDataURL("image/png");
 
-      // 檢查是否為手機常見瀏覽器 (iOS Safari, LINE, FB 等常阻擋直接下載)
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-      canvas.toBlob(async (blob) => {
-        if (!blob) {
-          showToast("圖片生成失敗，請重試");
-          return;
-        }
-
-        // 方案 1: 行動裝置優先使用 Web Share API (能直接叫出系統儲存圖片 / AirDrop / 相簿)
-        if (isMobile && navigator.canShare && navigator.canShare({ files: [new File([blob], fileName, { type: "image/png" })] })) {
-          try {
-            const file = new File([blob], fileName, { type: "image/png" });
+      // 1. 嘗試使用現代 Web Share API（手機最友善，能直接選「儲存影像」或 AirDrop / LINE）
+      if (navigator.share) {
+        try {
+          const blob = await (await fetch(dataUrl)).blob();
+          const file = new File([blob], fileName, { type: "image/png" });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
             await navigator.share({
               files: [file],
               title: "我的單車節名場面",
               text: "我在成大單車節製作的專屬紀念卡！"
             });
-            showToast("🎉 分享/儲存成功！");
-            triggerConfetti();
-            return;
-          } catch (err) {
-            if (err.name !== "AbortError") {
-              console.log("Web Share 無法完成，啟用備援方案", err);
-            } else {
-              return; // 使用者主動取消分享
-            }
-          }
-        }
-
-        // 方案 2: 使用標準 Blob URL 嘗試觸發瀏覽器下載
-        try {
-          const blobUrl = URL.createObjectURL(blob);
-          const link = document.createElement("a");
-          link.href = blobUrl;
-          link.download = fileName;
-          link.style.display = "none";
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-
-          setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
-
-          // 若在一般桌機或正常 Chrome，直接成功
-          if (!isMobile) {
-            showToast("🎉 專屬紀念卡下載成功！已為你珍藏留念！");
+            showToast("🎉 已儲存/分享成功！");
             triggerConfetti();
             return;
           }
-        } catch (e) {
-          console.error("Link click failed", e);
+        } catch (err) {
+          if (err.name === "AbortError") return; // 使用者主動按取消
+          console.log("Share API 未支援檔案，切換下一步", err);
         }
+      }
 
-        // 方案 3: 手機版終極防護（開啟預覽彈窗讓使用者長按圖片儲存至相簿）
-        const dataUrl = canvas.toDataURL("image/png");
-        const modal = document.getElementById("imageSaveModal");
-        const modalImg = document.getElementById("modalPreviewImg");
+      // 2. 電腦版或支援點擊下載的瀏覽器：透過隱藏 a 標籤觸發
+      try {
+        const link = document.createElement("a");
+        link.href = dataUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } catch (e) {
+        console.log("下載點擊受阻", e);
+      }
+
+      // 3. 一律主動打開全螢幕大圖彈窗（終極防護：任何人都能長按儲存）
+      const modal = document.getElementById("imageSaveModal");
+      const modalImg = document.getElementById("modalPreviewImg");
+      if (modal && modalImg) {
         modalImg.src = dataUrl;
         modal.classList.remove("hidden");
         if (window.lucide) lucide.createIcons();
-        showToast("📱 請長按圖片儲存到手機相簿！");
-        triggerConfetti();
+      }
 
-      }, "image/png");
+      showToast("📸 請長按圖片即可儲存到手機相簿！");
+      triggerConfetti();
     }
 
     function triggerConfetti() {
