@@ -12,7 +12,7 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- HTML5 QRCode Scanner -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-  <!-- QRCode Generator Library (產生各系 QR Code 用) -->
+  <!-- QRCode Generator Library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <!-- Canvas Confetti -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -399,7 +399,7 @@
     </div>
   </div>
 
-  <!-- MODAL 4: 玩法說明視窗 -->
+  <!-- MODAL 4: 玩法說明視窗（首次進入自動跳出） -->
   <div id="rulesModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -679,7 +679,6 @@
       }
     }
 
-    // 同步讀取與寫入 window.name（即使頁面重整或同視窗導航也能即時保留）
     function saveWindowNameBackup() {
       try {
         const payload = {
@@ -722,13 +721,11 @@
     async function loadAllPersistentData() {
       let loadedBackpack = null;
 
-      // 1. 優先讀取 localStorage
       try {
         const lsRaw = localStorage.getItem(STORAGE_KEY);
         if (lsRaw) loadedBackpack = JSON.parse(lsRaw);
       } catch (e) {}
 
-      // 2. 備援：讀取 IndexedDB
       if (!loadedBackpack || loadedBackpack.length === 0) {
         const idbData = await loadFromIndexedDB(STORAGE_KEY);
         if (idbData && Array.isArray(idbData) && idbData.length > 0) {
@@ -736,7 +733,6 @@
         }
       }
 
-      // 3. 備援：讀取 window.name
       if (!loadedBackpack || loadedBackpack.length === 0) {
         const winData = loadWindowNameBackup();
         if (winData && Array.isArray(winData.backpack) && winData.backpack.length > 0) {
@@ -744,7 +740,6 @@
         }
       }
 
-      // 4. 備援：讀取長效 Cookie 科系 ID 還原
       if (!loadedBackpack || loadedBackpack.length === 0) {
         const cookieDepts = getBackupCookie("bf_depts_v2") || getBackupCookie("bf_depts");
         if (cookieDepts) {
@@ -766,7 +761,6 @@
         saveBackpackToStorage();
       }
 
-      // 載入兌獎狀態（同樣四重備援）
       let loadedRedeem = null;
       try {
         const lsRedeem = localStorage.getItem(REDEEM_STORAGE_KEY);
@@ -793,7 +787,6 @@
       }
     }
 
-    // 監聽手機把網頁滑掉、切到背景或關閉分頁的瞬間，強制同步寫入所有儲存區
     window.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "hidden") {
         saveBackpackToStorage();
