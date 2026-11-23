@@ -3,49 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>🚲 關鍵字造句｜拼出你的單車節名場面！</title>
-  <!-- Tailwind CSS CDN -->
+  <title>🚲 關鍵字造句 - 單車節名場面生成器</title>
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Google Fonts: Inter & Noto Sans TC -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <!-- Google Fonts: Noto Sans TC -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- HTML5-QRCode Scanner Library -->
-  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-  <!-- Canvas Confetti for Celebration -->
+  <!-- HTML5 QRCode Scanner -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <!-- QRCode Generator Library (產生各系 QR Code 用) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- Canvas Confetti -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['"Noto Sans TC"', 'sans-serif'],
-          },
-          colors: {
-            bike: {
-              50: '#fff7ed',
-              100: '#ffedd5',
-              200: '#fed7aa',
-              500: '#f97316',
-              600: '#ea580c',
-              700: '#c2410c',
-              dark: '#1e293b',
-              accent: '#06b6d4',
-              violet: '#8b5cf6'
-            }
-          }
-        }
-      }
-    }
-  </script>
 
   <style>
     body {
       font-family: 'Noto Sans TC', sans-serif;
-      touch-action: manipulation;
+      background-color: #fff7ed;
       -webkit-tap-highlight-color: transparent;
     }
     .no-scrollbar::-webkit-scrollbar {
@@ -55,326 +30,235 @@
       -ms-overflow-style: none;
       scrollbar-width: none;
     }
-    @keyframes pulseGlow {
-      0%, 100% { box-shadow: 0 0 15px rgba(249, 115, 22, 0.4); }
-      50% { box-shadow: 0 0 25px rgba(249, 115, 22, 0.8); }
+    #qr-reader video {
+      border-radius: 0.75rem;
+      object-fit: cover !important;
+      width: 100% !important;
     }
-    .glow-orange {
-      animation: pulseGlow 2.5s infinite;
+    #qr-reader__scan_region {
+      background: transparent !important;
     }
   </style>
 </head>
-<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col justify-between selection:bg-orange-500 selection:text-white">
+<body class="text-slate-800 min-h-screen flex flex-col justify-between bg-gradient-to-b from-orange-50 via-amber-50/40 to-orange-100/50">
 
-  <!-- Top App Navigation -->
-  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-orange-100 shadow-sm">
-    <div class="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
-      <div class="flex items-center space-x-2">
-        <span class="text-2xl">🚲</span>
+  <!-- Toast 全域浮動提示 -->
+  <div id="toastMessage" class="fixed top-16 left-1/2 -translate-x-1/2 z-50 hidden max-w-[90vw] bg-slate-900/95 text-white text-xs font-bold px-4 py-2.5 rounded-2xl shadow-xl border border-slate-700 text-center backdrop-blur-md transition-all">
+  </div>
+
+  <!-- 頂部導覽列 -->
+  <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-orange-100 px-4 py-3 shadow-sm">
+    <div class="max-w-md mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white text-lg shadow-md shadow-orange-500/20">
+          🚲
+        </div>
         <div>
-          <h1 class="text-base font-black tracking-tight text-slate-900 leading-none">關鍵字造句</h1>
-          <p class="text-[11px] text-orange-600 font-semibold tracking-wider">單車節名場面生成器</p>
+          <h1 class="text-sm font-black text-slate-900 tracking-tight leading-none">關鍵字造句</h1>
+          <p class="text-[10px] font-bold text-orange-600 mt-0.5">單車節名場面生成器</p>
         </div>
       </div>
-      <div class="flex items-center gap-2">
-        <button onclick="openRulesModal()" class="flex items-center gap-1 bg-orange-50 text-orange-700 px-2.5 py-1.5 rounded-full text-xs font-bold border border-orange-200 hover:bg-orange-100 transition active:scale-95">
-          <i data-lucide="help-circle" class="w-3.5 h-3.5"></i>
-          <span>玩法</span>
+
+      <div class="flex items-center gap-1.5">
+        <!-- 開發/測試模擬器與 QR 產生器按鈕 -->
+        <button id="devSimulatorBtn" onclick="openDevSimulatorModal()" class="hidden px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 text-[11px] font-bold rounded-xl flex items-center gap-1 shadow-sm active:scale-95 transition">
+          <i data-lucide="flask-conical" class="w-3.5 h-3.5"></i>
+          <span>後台 / QR產生</span>
         </button>
-        <!-- 測試模擬器按鈕 (受 IS_DEV_MODE 控制) -->
-        <button id="devSimulatorBtn" onclick="toggleDevModal()" class="flex items-center gap-1 bg-slate-100 text-slate-600 px-2.5 py-1.5 rounded-full text-xs font-bold border border-slate-200 hover:bg-slate-200 transition active:scale-95" title="快速測試攤位QR">
-          <i data-lucide="flask-conical" class="w-3.5 h-3.5 text-indigo-500"></i>
-          <span>模擬器</span>
+
+        <!-- 玩法說明按鈕 -->
+        <button onclick="openRulesModal()" class="px-2.5 py-1.5 bg-orange-100 hover:bg-orange-200 text-orange-700 text-[11px] font-black rounded-xl flex items-center gap-1 active:scale-95 transition">
+          <i data-lucide="help-circle" class="w-3.5 h-3.5"></i>
+          <span>玩法說明</span>
         </button>
       </div>
     </div>
   </header>
 
-  <!-- Main Container -->
-  <main class="max-w-md mx-auto w-full flex-grow p-4 pb-28">
+  <!-- 主要內容區塊 -->
+  <main class="flex-1 max-w-md w-full mx-auto px-4 pt-4 pb-24 space-y-4">
 
-    <!-- TAB 1: 收集 & 掃描 (Scanner & Intro) -->
-    <section id="tab-scan" class="tab-page space-y-4">
-      <!-- Banner Card -->
-      <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-orange-500 via-amber-500 to-rose-500 p-5 text-white shadow-lg">
-        <div class="absolute -right-4 -bottom-6 text-7xl opacity-20 select-none">🚲</div>
-        <div class="relative z-10">
-          <span class="inline-block bg-white/20 backdrop-blur-md text-white text-[11px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider mb-2">Campus Bike Fest</span>
+    <!-- ==================== TAB 1: 收集掃碼 ==================== -->
+    <section id="section-collect" class="space-y-4">
+      <div class="bg-gradient-to-br from-orange-500 via-amber-500 to-orange-600 rounded-3xl p-5 text-white shadow-lg shadow-orange-500/20 relative overflow-hidden">
+        <div class="relative z-10 space-y-2">
+          <div class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/20 backdrop-blur-sm rounded-full text-[11px] font-bold">
+            <span>✨ 探索三大帳篷展區・47 個科系暗號</span>
+          </div>
           <h2 class="text-xl font-black leading-snug">收集關鍵字，<br>拼出你的單車節名場面！</h2>
-          <p class="text-xs text-orange-100 mt-1.5 font-medium leading-relaxed">穿梭各系攤位，每掃一系一次收進 3 個關鍵字，任選 3 系拼出專屬拍立得！</p>
+          <p class="text-xs text-orange-50 leading-relaxed">
+            穿梭 A、B、C 三個帳篷展區掃描 QR Code，一次解鎖該系 3 個關鍵字，集滿三個不同區域的科系就能創作紀念卡！
+          </p>
         </div>
+        <div class="absolute -right-4 -bottom-6 text-8xl opacity-20 select-none pointer-events-none">🚲</div>
       </div>
 
-      <!-- Quick Action: QR Scanner Card -->
-      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
-        <div class="flex items-center justify-between mb-3">
-          <div class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center font-bold">
-              <i data-lucide="qr-code" class="w-4 h-4"></i>
-            </div>
-            <div>
-              <h3 class="font-bold text-sm text-slate-900">掃描攤位 QR Code</h3>
-              <p class="text-[11px] text-slate-400">至各系帳篷現場掃描即可收入背包</p>
-            </div>
+      <!-- 掃描控制面板 -->
+      <div class="bg-white rounded-3xl p-4 shadow-sm border border-orange-100 space-y-3">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-sm font-black text-slate-900">STEP 01｜攤位 QR Code 掃描</h3>
+            <p class="text-[11px] text-slate-500">掃描帳篷立牌條碼，立即收入背包</p>
           </div>
-          <button id="toggleScannerBtn" onclick="toggleCameraScanner()" class="px-3 py-1.5 bg-orange-600 text-white text-xs font-bold rounded-xl shadow-md hover:bg-orange-700 active:scale-95 transition flex items-center gap-1.5">
-            <i data-lucide="camera" class="w-3.5 h-3.5"></i>
-            <span id="scannerBtnText">開啟相機</span>
+          <button onclick="toggleCameraScanner()" class="px-4 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-black text-xs rounded-2xl shadow-md shadow-orange-500/25 flex items-center gap-1.5 active:scale-95 transition">
+            <i data-lucide="qr-code" class="w-4 h-4"></i>
+            <span>開啟相機掃碼</span>
           </button>
         </div>
 
-        <!-- Camera Scanner Element -->
         <div id="scannerWrapper" class="hidden overflow-hidden rounded-xl border-2 border-dashed border-orange-300 bg-slate-900 text-white relative">
           <div id="qr-reader" class="w-full"></div>
           <p class="text-[11px] text-center py-2 text-slate-300 bg-black/60">對準各系攤位的關鍵字 QR Code 即可自動感應</p>
         </div>
-      </div>
 
-      <!-- Backpack Summary Preview -->
-      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
-        <div class="flex items-center justify-between mb-2">
-          <div class="flex items-center gap-2">
-            <i data-lucide="backpack" class="w-4 h-4 text-orange-600"></i>
-            <h3 class="font-bold text-sm text-slate-800">當前背包狀態</h3>
-          </div>
-          <span id="collectedCountBadge" class="text-xs font-bold text-orange-600 bg-orange-50 border border-orange-200 px-2.5 py-0.5 rounded-full">
-            已收集 0 個系 (0 個詞)
-          </span>
-        </div>
-        
-        <p id="backpackPrompt" class="text-xs text-slate-500 mb-3">
-          尚未收集足夠科系。每掃描一個攤位即可獲得該系全部 3 個關鍵字，至少需要 <strong class="text-orange-600">3 個不同科系</strong> 才能開始造句喔！
-        </p>
-
-        <div id="quickBackpackPills" class="flex flex-wrap gap-1.5 min-h-[48px] p-2.5 bg-slate-50 rounded-xl border border-slate-100"></div>
-
-        <div class="mt-3 flex gap-2">
-          <button onclick="switchTab('tab-backpack')" class="flex-1 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition text-center">
-            查看完整背包清單
-          </button>
-          <button id="goCraftBtn" onclick="switchTab('tab-craft')" disabled class="flex-1 py-2 text-xs font-bold text-white bg-slate-300 rounded-xl transition text-center disabled:opacity-50 disabled:cursor-not-allowed">
-            前往造句工坊 ✍️
-          </button>
-        </div>
-      </div>
-
-      <!-- Instructions Step Guide -->
-      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3">
-        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">遊戲四部曲</h4>
-        <div class="grid grid-cols-2 gap-2 text-xs">
-          <div class="p-2.5 rounded-xl bg-orange-50/60 border border-orange-100">
-            <div class="font-bold text-orange-700 mb-0.5">01 出發收集 🔍</div>
-            <p class="text-[11px] text-slate-600 leading-tight">逛攤位掃各系專屬 QR Code</p>
-          </div>
-          <div class="p-2.5 rounded-xl bg-amber-50/60 border border-amber-100">
-            <div class="font-bold text-amber-700 mb-0.5">02 拼出名場面 ✍️</div>
-            <p class="text-[11px] text-slate-600 leading-tight">選 3 系關鍵字填入模板</p>
-          </div>
-          <div class="p-2.5 rounded-xl bg-cyan-50/60 border border-cyan-100">
-            <div class="font-bold text-cyan-700 mb-0.5">03 拍下故事 📸</div>
-            <p class="text-[11px] text-slate-600 leading-tight">上傳現場合照或校園景色</p>
-          </div>
-          <div class="p-2.5 rounded-xl bg-emerald-50/60 border border-emerald-100">
-            <div class="font-bold text-emerald-700 mb-0.5">04 珍藏回憶 🎉</div>
-            <p class="text-[11px] text-slate-600 leading-tight">生成並下載專屬名場面卡</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- TAB 2: 我的背包 (Backpack Inventory) -->
-    <section id="tab-backpack" class="tab-page hidden space-y-4">
-      <div class="flex items-center justify-between">
-        <div>
-          <h2 class="text-lg font-black text-slate-900 flex items-center gap-2">
-            <span>🎒</span> 我的關鍵字背包
-          </h2>
-          <p class="text-xs text-slate-500">已收集之關鍵字會永久保留於此裝置中</p>
-        </div>
-        <button id="clearBackpackBtn" type="button" onclick="openResetConfirmModal()" class="text-xs text-rose-500 hover:text-rose-700 font-semibold flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-rose-200 bg-rose-50/50 hover:bg-rose-100 transition active:scale-95 cursor-pointer">
-          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-          <span>重設背包</span>
-        </button>
-      </div>
-
-      <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2 text-xs text-amber-800">
-        <i data-lucide="info" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5"></i>
-        <span>造句規則提醒：每張紀念卡必須由 <strong>3 個不同科系</strong> 的關鍵字組合而成。每個科系只能選出一個字詞喔！</span>
-      </div>
-
-      <div id="backpackFullList" class="space-y-3"></div>
-    </section>
-
-    <!-- TAB 3: 造句工坊 (Sentence Maker) -->
-    <section id="tab-craft" class="tab-page hidden space-y-4">
-      <div class="flex items-center justify-between">
-        <div>
-          <h2 class="text-lg font-black text-slate-900 flex items-center gap-2">
-            <span>✍️</span> 拼出名場面
-          </h2>
-          <p class="text-xs text-slate-500">挑選句型與 3 個不同科系的關鍵字</p>
-        </div>
-        <button onclick="randomizeSentence()" class="text-xs text-orange-600 bg-orange-50 hover:bg-orange-100 font-bold px-3 py-1.5 rounded-full border border-orange-200 flex items-center gap-1 transition">
-          <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
-          <span>一鍵靈感隨機</span>
-        </button>
-      </div>
-
-      <!-- Template Selector -->
-      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
-        <label class="block text-xs font-bold text-slate-700 mb-2 flex items-center gap-1">
-          <i data-lucide="layout-template" class="w-3.5 h-3.5 text-orange-500"></i>
-          選擇句子模板：
-        </label>
-        <select id="templateSelect" onchange="handleTemplateChange()" class="w-full text-xs font-semibold bg-slate-50 border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-orange-500 focus:outline-none"></select>
-      </div>
-
-      <!-- 3 Keyword Slots -->
-      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3">
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-bold text-slate-700">依序選入 3 個關鍵字（需跨 3 個系）</span>
-          <button onclick="resetSelectedSlots()" class="text-[11px] text-slate-400 hover:text-slate-600 underline">清空重選</button>
-        </div>
-
-        <div class="grid grid-cols-1 gap-2.5">
-          <!-- Slot 1 -->
-          <div class="p-2.5 rounded-xl border-2 border-dashed border-orange-300 bg-orange-50/40 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <span class="w-6 h-6 rounded-full bg-orange-500 text-white flex items-center justify-center font-black text-xs shadow-sm">1</span>
-              <div>
-                <span class="text-[10px] text-orange-600 font-bold block">關鍵字一 (橘色)</span>
-                <span id="slot1-text" class="text-xs font-black text-slate-800">請從下方點選</span>
-              </div>
-            </div>
-            <button id="slot1-remove" onclick="removeSlot(0)" class="hidden text-slate-400 hover:text-rose-500 p-1">
-              <i data-lucide="x" class="w-4 h-4"></i>
-            </button>
-          </div>
-
-          <!-- Slot 2 -->
-          <div class="p-2.5 rounded-xl border-2 border-dashed border-cyan-300 bg-cyan-50/40 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <span class="w-6 h-6 rounded-full bg-cyan-500 text-white flex items-center justify-center font-black text-xs shadow-sm">2</span>
-              <div>
-                <span class="text-[10px] text-cyan-600 font-bold block">關鍵字二 (青藍)</span>
-                <span id="slot2-text" class="text-xs font-black text-slate-800">請從下方點選</span>
-              </div>
-            </div>
-            <button id="slot2-remove" onclick="removeSlot(1)" class="hidden text-slate-400 hover:text-rose-500 p-1">
-              <i data-lucide="x" class="w-4 h-4"></i>
-            </button>
-          </div>
-
-          <!-- Slot 3 -->
-          <div class="p-2.5 rounded-xl border-2 border-dashed border-purple-300 bg-purple-50/40 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <span class="w-6 h-6 rounded-full bg-purple-500 text-white flex items-center justify-center font-black text-xs shadow-sm">3</span>
-              <div>
-                <span class="text-[10px] text-purple-600 font-bold block">關鍵字三 (亮紫)</span>
-                <span id="slot3-text" class="text-xs font-black text-slate-800">請從下方點選</span>
-              </div>
-            </div>
-            <button id="slot3-remove" onclick="removeSlot(2)" class="hidden text-slate-400 hover:text-rose-500 p-1">
-              <i data-lucide="x" class="w-4 h-4"></i>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Live Sentence Preview -->
-      <div class="bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-2xl p-4 shadow-md">
-        <div class="text-[11px] font-bold tracking-wider text-orange-400 uppercase mb-2 flex items-center gap-1.5">
-          <i data-lucide="eye" class="w-3.5 h-3.5"></i>
-          即時預覽效果
-        </div>
-        <div id="liveSentenceBox" class="text-sm md:text-base font-bold leading-relaxed tracking-wide min-h-[50px] flex items-center"></div>
-      </div>
-
-      <!-- Keyword Picker Bank -->
-      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
-        <div class="flex items-center justify-between mb-2">
-          <h3 class="text-xs font-bold text-slate-700">從已解鎖科系中挑選（每系限選 1 個）：</h3>
-          <span class="text-[10px] text-slate-400">已解鎖系之 3 個關鍵字全數開放挑選</span>
-        </div>
-        <div id="craftKeywordGrid" class="space-y-2.5 max-h-64 overflow-y-auto pr-1"></div>
-      </div>
-
-      <button id="nextToCardBtn" onclick="goToCardCustomization()" disabled class="w-full py-3.5 px-4 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-2xl shadow-lg transition active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-        <span>下一步：拍攝背景照片與合成</span>
-        <i data-lucide="arrow-right" class="w-4 h-4"></i>
-      </button>
-    </section>
-
-    <!-- TAB 4: 紀念卡生成與下載 (Card Customization & Output) -->
-    <section id="tab-card" class="tab-page hidden space-y-4">
-      <div class="flex items-center justify-between">
-        <div>
-          <h2 class="text-lg font-black text-slate-900 flex items-center gap-2">
-            <span>🎉</span> 專屬紀念卡
-          </h2>
-          <p class="text-xs text-slate-500">拍攝/自訂背景，生成你的單車節專屬回憶</p>
-        </div>
-        <button onclick="switchTab('tab-craft')" class="text-xs text-slate-600 bg-slate-100 hover:bg-slate-200 font-semibold px-2.5 py-1.5 rounded-lg transition flex items-center gap-1">
-          <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
-          <span>改句子</span>
-        </button>
-      </div>
-
-      <!-- Photo Controls -->
-      <div class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200 space-y-3">
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-            <i data-lucide="image" class="w-3.5 h-3.5 text-orange-500"></i>
-            卡片背景設定
-          </span>
-          <span class="text-[11px] text-slate-400">支援相機拍照或相簿上傳</span>
-        </div>
-
-        <div class="grid grid-cols-2 gap-2">
-          <label class="cursor-pointer flex items-center justify-center gap-2 bg-orange-50 border border-orange-200 hover:bg-orange-100 text-orange-700 text-xs font-bold py-2.5 px-3 rounded-xl transition text-center">
-            <i data-lucide="camera" class="w-4 h-4"></i>
-            <span>拍照 / 上傳背景</span>
-            <input type="file" id="photoInput" accept="image/*" class="hidden" onchange="handlePhotoUpload(event)">
+        <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+          <span class="text-[11px] text-slate-500">相機打不開？（LINE/IG 瀏覽器適用）</span>
+          <label class="cursor-pointer px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition flex items-center gap-1.5 active:scale-95">
+            <i data-lucide="image-plus" class="w-3.5 h-3.5 text-orange-600"></i>
+            <span>拍 QR 照片掃描</span>
+            <input type="file" id="qrFileInput" accept="image/*" capture="environment" class="hidden" onchange="handleQrImageFileScan(event)">
           </label>
-          <button onclick="resetDefaultThemePhoto()" class="flex items-center justify-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold py-2.5 px-3 rounded-xl transition">
-            <i data-lucide="palette" class="w-3.5 h-3.5"></i>
-            <span>單車節官方質感底圖</span>
+        </div>
+        <div id="qr-file-reader" class="hidden"></div>
+      </div>
+
+      <!-- 背包即時收集進度 -->
+      <div class="space-y-2.5">
+        <div class="flex items-center justify-between px-1">
+          <h3 class="text-xs font-black text-slate-700 flex items-center gap-1.5">
+            <i data-lucide="backpack" class="w-4 h-4 text-orange-500"></i>
+            <span>最近收集的科系</span>
+          </h3>
+          <button onclick="switchTab('backpack')" class="text-[11px] font-bold text-orange-600 hover:underline">
+            查看全部背包 &rarr;
+          </button>
+        </div>
+        <div id="collectPreviewContainer" class="space-y-2.5"></div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 2: 關鍵字背包 ==================== -->
+    <section id="section-backpack" class="hidden space-y-4">
+      <div class="bg-white rounded-3xl p-4 shadow-sm border border-orange-100 flex items-center justify-between">
+        <div>
+          <h2 class="text-base font-black text-slate-900">我的關鍵字背包</h2>
+          <p class="text-xs text-slate-500 mt-0.5">已自動保存於手機中，重整或關閉網頁也不會消失</p>
+        </div>
+        <div class="text-right">
+          <div id="collectedDeptCount" class="text-lg font-black text-orange-600">0 / 47</div>
+          <div class="text-[10px] font-bold text-slate-400">已解鎖科系</div>
+        </div>
+      </div>
+
+      <div id="backpackListContainer" class="space-y-2.5"></div>
+
+      <div class="pt-2 space-y-2.5">
+        <button onclick="switchTab('craft')" class="w-full py-3.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black text-sm rounded-2xl shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2 active:scale-95 transition">
+          <i data-lucide="pen-tool" class="w-4 h-4"></i>
+          <span>前往造句工坊拼名場面</span>
+        </button>
+
+        <button onclick="openResetConfirmModal()" class="w-full py-2.5 bg-white hover:bg-rose-50 border border-rose-200 text-rose-600 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          <span>清空重設背包</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 3: 造句工坊 ==================== -->
+    <section id="section-craft" class="hidden space-y-4">
+      <div class="bg-white rounded-3xl p-4 shadow-sm border border-orange-100 space-y-3">
+        <div class="flex items-center justify-between">
+          <h2 class="text-sm font-black text-slate-900">STEP 02｜選擇句型並填入 3 個關鍵字</h2>
+          <button onclick="resetSelectedSlots()" class="text-[11px] font-bold text-slate-400 hover:text-orange-600 flex items-center gap-1">
+            <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+            <span>重選關鍵字</span>
           </button>
         </div>
 
-        <!-- Image adjustment controls -->
-        <div class="grid grid-cols-2 gap-3 pt-1 text-[11px] text-slate-600">
-          <div>
-            <div class="flex justify-between mb-1">
-              <span>暗色遮罩</span>
-              <span id="darkOverlayVal">55%</span>
-            </div>
-            <input type="range" id="overlayOpacityRange" min="20" max="85" value="55" class="w-full accent-orange-500" oninput="updateCardCanvas()">
+        <!-- 三大帳篷區域集章狀態條 -->
+        <div class="bg-orange-50/80 border border-orange-100 rounded-2xl p-2.5 flex items-center justify-between gap-2">
+          <span class="text-[11px] font-black text-slate-700 shrink-0">展區收集進度：</span>
+          <div id="zoneProgressBadges" class="flex items-center gap-1.5 flex-wrap justify-end"></div>
+        </div>
+
+        <!-- 句型下拉選單 -->
+        <div>
+          <label class="block text-[11px] font-bold text-slate-500 mb-1">挑選喜歡的句子模板：</label>
+          <select id="templateSelect" onchange="handleTemplateChange()" class="w-full bg-orange-50/70 border border-orange-200 text-slate-800 text-xs font-bold rounded-xl p-2.5 focus:outline-none focus:border-orange-500">
+          </select>
+        </div>
+
+        <!-- 句子組裝預覽框 -->
+        <div class="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl p-4 shadow-inner">
+          <div class="text-[10px] font-bold text-orange-300 mb-2 flex items-center justify-between">
+            <span>✨ 即時名場面預覽（點擊已選關鍵字可移除）</span>
           </div>
-          <div>
-            <div class="flex justify-between mb-1">
-              <span>背景柔焦</span>
-              <span id="blurVal">0px</span>
-            </div>
-            <input type="range" id="blurRange" min="0" max="8" value="0" class="w-full accent-orange-500" oninput="updateCardCanvas()">
+          <div id="sentencePreviewBox" class="text-sm font-bold leading-loose tracking-wide">
           </div>
+        </div>
+
+        <p class="text-[11px] text-slate-500 flex items-center gap-1">
+          <i data-lucide="info" class="w-3.5 h-3.5 text-orange-500 shrink-0"></i>
+          <span>規則：需集滿 <b>A 區、B 區、C 區</b> 三個不同帳篷區域的科系（每區選 1 詞）！</span>
+        </p>
+      </div>
+
+      <!-- 可選關鍵字池 -->
+      <div class="space-y-2">
+        <h3 class="text-xs font-black text-slate-700 px-1">點擊下方關鍵字填入空格：</h3>
+        <div id="craftKeywordPool" class="space-y-2.5"></div>
+      </div>
+
+      <!-- 生成紀念卡按鈕 -->
+      <div class="pt-2">
+        <button onclick="generateCardFromCraft()" class="w-full py-3.5 bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 hover:to-amber-600 text-white font-black text-sm rounded-2xl shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2 active:scale-95 transition">
+          <i data-lucide="sparkles" class="w-4 h-4"></i>
+          <span>完成句子！前往製作專屬紀念卡</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 4: 專屬紀念卡 ==================== -->
+    <section id="section-card" class="hidden space-y-4">
+      <div class="bg-white rounded-3xl p-4 shadow-sm border border-orange-100 space-y-3">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-sm font-black text-slate-900">STEP 03｜選擇紀念卡背景</h2>
+            <p class="text-[11px] text-slate-500">可套用官方精選底圖，或自己拍照／上傳</p>
+          </div>
+          <label class="cursor-pointer px-3.5 py-2 bg-orange-500 hover:bg-orange-600 text-white font-black text-xs rounded-xl flex items-center gap-1.5 shadow-sm active:scale-95 transition">
+            <i data-lucide="camera" class="w-4 h-4"></i>
+            <span>自己拍照 / 上傳</span>
+            <input type="file" accept="image/*" onchange="handlePhotoUpload(event)" class="hidden">
+          </label>
+        </div>
+
+        <!-- 官方提供主題底圖選擇器 -->
+        <div class="space-y-1.5 pt-1">
+          <div class="text-[11px] font-bold text-slate-500">或選擇官方精選主題底圖：</div>
+          <div id="presetThemeSelector" class="grid grid-cols-4 gap-2"></div>
+        </div>
+
+        <!-- 背景遮罩暗度調整滑桿 -->
+        <div class="flex items-center gap-3 pt-1 border-t border-slate-100">
+          <span class="text-[11px] font-bold text-slate-500 shrink-0">背景暗度</span>
+          <input type="range" id="bgDarknessSlider" min="0.10" max="0.80" step="0.05" value="0.35" oninput="updateCardCanvas()" class="w-full accent-orange-500 h-1.5 bg-slate-200 rounded-lg cursor-pointer">
         </div>
       </div>
 
-      <!-- Card Display Canvas Container -->
-      <div class="flex justify-center">
-        <div class="w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl border-4 border-white bg-slate-900 relative">
+      <!-- 紀念卡預覽區 -->
+      <div class="bg-white p-3 rounded-3xl shadow-md border border-orange-100 space-y-2">
+        <div class="relative rounded-2xl overflow-hidden bg-slate-900 shadow-inner aspect-[4/5] flex items-center justify-center">
           <canvas id="cardCanvas" class="hidden"></canvas>
-          <img id="cardDisplayImg" alt="你的專屬紀念卡" class="w-full h-auto block rounded-2xl select-auto pointer-events-auto shadow-inner" src="">
+          <img id="cardPreviewImg" alt="我的單車節名場面紀念卡" class="w-full h-full object-contain select-auto">
         </div>
+        <p class="text-[11px] text-center font-bold text-orange-600 bg-orange-50 py-1.5 rounded-xl">
+          👆 手機可以直接長按上方圖片，點選「儲存影像 / 下載圖片」存進相簿！
+        </p>
       </div>
 
-      <div class="bg-orange-50 border border-orange-200 rounded-xl p-2.5 text-center text-xs text-orange-800 font-bold flex items-center justify-center gap-1.5 shadow-xs">
-        <span>👉</span>
-        <span>手機可以直接「長按上方圖片」選「儲存影像」存到相簿！</span>
-      </div>
-
-      <!-- Download & Action Buttons -->
+      <!-- 下載與分享按鈕組 -->
       <div class="space-y-2">
         <button onclick="downloadCardImage()" class="w-full py-3.5 px-4 bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 hover:to-amber-600 text-white font-black text-sm rounded-2xl shadow-lg shadow-orange-500/25 transition active:scale-95 flex items-center justify-center gap-2">
           <i data-lucide="download" class="w-4 h-4"></i>
@@ -388,310 +272,340 @@
           </button>
           <button onclick="shareOrCopyCard()" class="py-2.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5">
             <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
-            <span>分享好句</span>
+            <span>複製句子分享</span>
           </button>
         </div>
 
         <button onclick="restartSentenceMaking()" class="w-full py-2.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5">
           <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-orange-500"></i>
-          <span>再做一張名場面</span>
+          <span>返回重新造句</span>
         </button>
-      </div>
 
+        <!-- 工作人員兌換核銷專區 (限一機兌換一次) -->
+        <div id="staffRedeemSection" class="mt-4 pt-4 border-t-2 border-dashed border-slate-200">
+          <div id="redeemPendingBox" class="bg-emerald-50 border border-emerald-200 rounded-2xl p-3.5 flex items-center justify-between gap-3">
+            <div>
+              <div class="text-xs font-black text-emerald-900 flex items-center gap-1">
+                <span>🎁</span> 活動禮物兌換區（限領一次）
+              </div>
+              <p class="text-[11px] text-emerald-700 mt-0.5">請向服務台工作人員出示此畫面進行密碼核銷</p>
+            </div>
+            <button onclick="openStaffRedeemModal()" class="shrink-0 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl shadow-sm active:scale-95 transition">
+              工作人員核銷
+            </button>
+          </div>
+
+          <div id="redeemCompletedBox" class="hidden bg-slate-800 text-white rounded-2xl p-3.5 flex items-center justify-between gap-3 shadow-inner">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <div class="text-xs font-black text-emerald-400">✅ 此手機已完成禮物兌換</div>
+                <p id="redeemTimestampText" class="text-[10px] text-slate-300 mt-0.5 font-mono">核銷時間：--</p>
+              </div>
+            </div>
+            <span class="text-[10px] bg-slate-700 text-slate-300 px-2.5 py-1 rounded-full font-bold border border-slate-600">已鎖定</span>
+          </div>
+        </div>
+      </div>
     </section>
 
   </main>
 
-  <!-- MODAL: 手機端長按儲存備援彈窗 -->
-  <div id="imageSaveModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex flex-col items-center justify-center p-4">
-    <div class="max-w-xs w-full bg-white rounded-3xl p-4 text-center space-y-3 shadow-2xl animate-in fade-in zoom-in-95">
-      <div class="flex items-center justify-between border-b pb-2">
-        <h3 class="font-black text-sm text-slate-900 flex items-center gap-1">
-          <span>📸</span> 儲存你的專屬紀念卡
-        </h3>
-        <button onclick="closeImageSaveModal()" class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-800">
-          <i data-lucide="x" class="w-3.5 h-3.5"></i>
-        </button>
-      </div>
-      <p class="text-[11px] text-orange-600 font-bold bg-orange-50 py-1.5 px-2 rounded-lg">
-        👉 請「長按下方圖片」並選擇「儲存影像」或「下載圖片」
-      </p>
-      <div class="rounded-xl overflow-hidden border border-slate-200 shadow-inner max-h-[55vh] flex items-center justify-center bg-slate-900">
-        <img id="modalPreviewImg" src="" alt="紀念卡預覽" class="w-full h-auto max-h-[55vh] object-contain block select-auto pointer-events-auto">
-      </div>
-      <button onclick="closeImageSaveModal()" class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition">
-        完成
+  <!-- 底部固定分頁導覽列 -->
+  <nav class="fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur-md border-t border-orange-100 px-2 py-1.5 shadow-[0_-4px_15px_rgba(0,0,0,0.03)]">
+    <div class="max-w-md mx-auto grid grid-cols-4 gap-1">
+      <button id="tab-btn-collect" onclick="switchTab('collect')" class="flex flex-col items-center justify-center py-1.5 rounded-2xl text-orange-600 bg-orange-50 transition">
+        <i data-lucide="scan-line" class="w-5 h-5"></i>
+        <span class="text-[10px] font-black mt-0.5">攤位掃碼</span>
       </button>
-    </div>
-  </div>
-
-  <!-- Bottom Floating Tab Bar -->
-  <nav class="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-lg">
-    <div class="max-w-md mx-auto grid grid-cols-4 px-2 py-1.5">
-      <button onclick="switchTab('tab-scan')" id="nav-tab-scan" class="nav-item flex flex-col items-center justify-center py-1 rounded-xl text-orange-600 font-bold text-[10px] transition">
-        <i data-lucide="compass" class="w-5 h-5 mb-0.5"></i>
-        <span>出發收集</span>
+      <button id="tab-btn-backpack" onclick="switchTab('backpack')" class="flex flex-col items-center justify-center py-1.5 rounded-2xl text-slate-500 hover:bg-slate-50 transition">
+        <i data-lucide="backpack" class="w-5 h-5"></i>
+        <span class="text-[10px] font-black mt-0.5">關鍵字背包</span>
       </button>
-
-      <button onclick="switchTab('tab-backpack')" id="nav-tab-backpack" class="nav-item flex flex-col items-center justify-center py-1 rounded-xl text-slate-400 font-bold text-[10px] relative transition">
-        <i data-lucide="backpack" class="w-5 h-5 mb-0.5"></i>
-        <span>背包清單</span>
-        <span id="navBackpackDot" class="hidden absolute top-1 right-6 w-2 h-2 rounded-full bg-orange-500"></span>
+      <button id="tab-btn-craft" onclick="switchTab('craft')" class="flex flex-col items-center justify-center py-1.5 rounded-2xl text-slate-500 hover:bg-slate-50 transition">
+        <i data-lucide="pen-tool" class="w-5 h-5"></i>
+        <span class="text-[10px] font-black mt-0.5">造句工坊</span>
       </button>
-
-      <button onclick="switchTab('tab-craft')" id="nav-tab-craft" class="nav-item flex flex-col items-center justify-center py-1 rounded-xl text-slate-400 font-bold text-[10px] transition">
-        <i data-lucide="sparkles" class="w-5 h-5 mb-0.5"></i>
-        <span>造句工坊</span>
-      </button>
-
-      <button onclick="switchTab('tab-card')" id="nav-tab-card" class="nav-item flex flex-col items-center justify-center py-1 rounded-xl text-slate-400 font-bold text-[10px] transition">
-        <i data-lucide="award" class="w-5 h-5 mb-0.5"></i>
-        <span>專屬名場面</span>
+      <button id="tab-btn-card" onclick="switchTab('card')" class="flex flex-col items-center justify-center py-1.5 rounded-2xl text-slate-500 hover:bg-slate-50 transition">
+        <i data-lucide="image" class="w-5 h-5"></i>
+        <span class="text-[10px] font-black mt-0.5">專屬紀念卡</span>
       </button>
     </div>
   </nav>
 
-  <!-- MODAL 1: 遊戲規則與介紹 -->
-  <div id="rulesModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-sm w-full max-h-[85vh] overflow-y-auto p-5 text-slate-800 space-y-4 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
-      <div class="flex items-center justify-between border-b pb-3">
-        <div class="flex items-center gap-2">
-          <span class="text-2xl">🚲</span>
-          <h3 class="font-black text-base text-slate-900">關鍵字造句 玩法介紹</h3>
-        </div>
-        <button onclick="closeRulesModal()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-800">
-          <i data-lucide="x" class="w-4 h-4"></i>
-        </button>
-      </div>
+  <!-- ==================== MODALS 彈跳視窗區 ==================== -->
 
-      <div class="space-y-3 text-xs leading-relaxed text-slate-600">
-        <p class="font-bold text-orange-600 text-sm">收集關鍵字，拼出你的單車節名場面！</p>
-        <p>逛單車節只能聽介紹、拿傳單嗎？今年，換你成為故事的主角！</p>
-        <p>各系準備了充滿特色的關鍵字，可能是系上迷因、專業知識，也可能是只有內行人才懂的神祕暗號。穿梭各系攤位，收集三個關鍵字，拼出一句專屬於你的神奇語錄，再搭配自己拍攝的照片，製作獨一無二的單車節紀念卡！</p>
-        
-        <div class="bg-orange-50 rounded-xl p-3 border border-orange-100 space-y-1.5">
-          <div class="font-black text-slate-800">🎮 玩法說明</div>
-          <div><strong class="text-orange-700">STEP 01｜出發收集 🔍</strong><br>前往各系攤位，掃描現場的關鍵字 QR Code，收集你感興趣的關鍵字！每個系都有不同的驚喜，快去探索吧！</div>
-          <div><strong class="text-orange-700">STEP 02｜拼出名場面 ✍️</strong><br>集滿三個關鍵字後，挑選你喜歡的句型，將三個關鍵字填入空格，組成一句專屬於你的單車節名場面！</div>
-          <div><strong class="text-orange-700">STEP 03｜拍下你的故事 📸</strong><br>選擇一張自己拍攝的照片作為背景，可以是單車節現場、校園風景，也可以是和朋友的合照，讓你的創作更有特色！</div>
-          <div><strong class="text-orange-700">STEP 04｜生成專屬紀念卡 🎉</strong><br>完成你的句子與照片，生成獨一無二的專屬紀念卡並保存留念！</div>
-        </div>
-
-        <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 space-y-1 text-[11px] text-slate-500">
-          <div class="font-bold text-slate-700">💡 小提醒</div>
-          <p>• 關鍵字要從各系攤位收集，快去探索不同科系的特色！</p>
-          <p>• 句子使用的關鍵字越有創意，組合起來就越有可能出現意想不到的效果！</p>
-          <p>• 每個科系的關鍵字在句子中只能出現一次且選一個。</p>
-          <p>• 可以重複組合不同句子與背景，製作多張專屬紀念卡。</p>
-        </div>
-      </div>
-
-      <button onclick="closeRulesModal()" class="w-full py-2.5 bg-orange-600 text-white font-bold rounded-xl text-xs hover:bg-orange-700 transition">
-        我知道了，開始出發！
-      </button>
-    </div>
-  </div>
-
-  <!-- MODAL: 重設背包確認視窗 -->
-  <div id="resetConfirmModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-xs w-full p-5 text-center shadow-2xl space-y-4 transform animate-in fade-in zoom-in-95">
-      <div class="w-14 h-14 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto">
-        <i data-lucide="alert-triangle" class="w-7 h-7"></i>
-      </div>
-      <div>
-        <h3 class="text-base font-black text-slate-900">確定要清空背包？</h3>
-        <p class="text-xs text-slate-500 mt-1.5 leading-relaxed">
-          這將會移除背包內所有已收集的關鍵字，並重設造句槽位。此動作無法復原喔！
-        </p>
-      </div>
-      <div class="flex gap-2 pt-1">
-        <button onclick="closeResetConfirmModal()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">
-          取消
-        </button>
-        <button onclick="confirmResetBackpack()" class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs transition shadow-md">
-          確認清空
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL 2: 攤位 QR 測試模擬器 -->
-  <div id="devModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-sm w-full max-h-[85vh] overflow-y-auto p-5 text-slate-800 space-y-4 shadow-2xl relative">
-      <div class="flex items-center justify-between border-b pb-2">
-        <div>
-          <h3 class="font-black text-sm text-indigo-900 flex items-center gap-1.5">
-            <i data-lucide="flask-conical" class="w-4 h-4 text-indigo-600"></i>
-            攤位 QR 掃描測試模擬器
-          </h3>
-          <p class="text-[10px] text-slate-400">點擊任一科系，即可一次解鎖該系的全部 3 個關鍵字</p>
-        </div>
-        <button onclick="toggleDevModal()" class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
-          <i data-lucide="x" class="w-3.5 h-3.5"></i>
-        </button>
-      </div>
-
-      <div class="space-y-3">
-        <p class="text-xs text-slate-600">點選以下科系進行一鍵解鎖：</p>
-        <div id="devDeptList" class="space-y-2.5 max-h-[50vh] overflow-y-auto pr-1"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: QR Code 攤位產生器預覽 -->
-  <div id="qrPrintModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-sm w-full max-h-[85vh] overflow-y-auto p-5 text-slate-800 space-y-4 shadow-2xl relative">
-      <div class="flex items-center justify-between border-b pb-2">
-        <h3 class="font-black text-sm text-slate-900 flex items-center gap-1.5">
-          <i data-lucide="qr-code" class="w-4 h-4 text-orange-500"></i>
-          各系攤位 QR Code 格式資訊
-        </h3>
-        <button onclick="closeQrPrintModal()" class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
-          <i data-lucide="x" class="w-3.5 h-3.5"></i>
-        </button>
-      </div>
-      <p class="text-xs text-slate-600 leading-relaxed">
-        製作實體 QR Code 時，請將 QR Code 內容設為此網頁網址並帶上科系參數，例如：<br>
-        <code id="sampleQrUrl" class="block bg-slate-100 p-2 rounded-lg text-[11px] text-orange-600 mt-1 break-all font-mono">https://你的網址/?dept=fllo</code>
-      </p>
-      <div id="allDeptsQrInfo" class="space-y-2 max-h-60 overflow-y-auto text-xs"></div>
-    </div>
-  </div>
-
-  <!-- MODAL 3: 收集成功彈跳視窗 -->
-  <div id="collectedSuccessModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-xs w-full p-6 text-center shadow-2xl space-y-4 transform animate-in fade-in zoom-in-95">
-      <div class="w-16 h-16 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-3xl mx-auto shadow-inner">
+  <!-- MODAL 1: 收集成功彈窗 -->
+  <div id="collectSuccessModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-xs w-full p-6 text-center shadow-2xl space-y-4">
+      <div class="w-14 h-14 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto text-3xl">
         🎉
       </div>
       <div>
         <h3 class="text-lg font-black text-slate-900">收集成功！</h3>
-        <p class="text-xs text-slate-500 mt-1">你一次獲得了【<span id="collectedDeptName" class="font-bold text-orange-600"></span>】的全部 3 個關鍵字：</p>
-        <div id="collectedKeywordsList" class="mt-3 flex flex-col gap-1.5"></div>
+        <p id="modalCollectedDeptName" class="text-xs font-bold text-orange-600 mt-1"></p>
       </div>
-      <div class="pt-2 flex flex-col gap-2">
-        <button onclick="dismissSuccessModal()" class="w-full py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-xl text-xs transition">
-          收進背包並繼續探索
+      <div id="modalCollectedKeywords" class="flex flex-wrap justify-center gap-1.5 py-1"></div>
+      <button onclick="closeCollectSuccessModal()" class="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white font-black text-xs rounded-2xl shadow-md transition">
+        收入背包，繼續探索！
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL 2: 重設背包確認視窗 -->
+  <div id="resetConfirmModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-xs w-full p-5 text-center shadow-2xl space-y-4">
+      <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto">
+        <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+      </div>
+      <div>
+        <h3 class="text-base font-black text-slate-900">確定要清空背包嗎？</h3>
+        <p class="text-xs text-slate-500 mt-1">清空後所有已收集的科系關鍵字將會移除，需要重新掃描才能獲得喔！</p>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="closeResetConfirmModal()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">
+          先不要
         </button>
-        <button onclick="dismissSuccessModalAndGoCraft()" class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">
-          直接前往造句工坊
+        <button onclick="confirmResetBackpack()" class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs transition">
+          確定清空
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Custom Alert Notification Toast -->
-  <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-slate-900/90 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-lg pointer-events-none transition-all duration-300 opacity-0 transform -translate-y-4 flex items-center gap-2">
-    <span id="toastIcon">💡</span>
-    <span id="toastMsg">提示訊息</span>
+  <!-- MODAL 3: 工作人員密碼核銷視窗 -->
+  <div id="staffRedeemModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-xs w-full p-5 text-center shadow-2xl space-y-4">
+      <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
+        <i data-lucide="shield-check" class="w-6 h-6"></i>
+      </div>
+      <div>
+        <h3 class="text-base font-black text-slate-900">工作人員兌獎核銷</h3>
+        <p class="text-xs text-slate-500 mt-1">請輸入工作人員核銷密碼，確認後此手機將標記為已兌換（限換一次）：</p>
+      </div>
+      <div>
+        <input type="password" inputmode="numeric" id="staffPinInput" placeholder="請輸入核銷密碼" class="w-full text-center tracking-widest text-base font-black bg-slate-50 border-2 border-slate-200 focus:border-emerald-500 rounded-xl py-2.5 px-3 focus:outline-none">
+      </div>
+      <div class="flex gap-2">
+        <button onclick="closeStaffRedeemModal()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">
+          取消
+        </button>
+        <button onclick="verifyAndRedeemGift()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition shadow-md">
+          確認核銷
+        </button>
+      </div>
+    </div>
   </div>
 
-  <!-- Javascript Core Logic -->
+  <!-- MODAL 4: 玩法說明視窗 -->
+  <div id="rulesModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="text-base font-black text-slate-900 flex items-center gap-1.5">
+          <span>🎮</span> 玩法說明與規則
+        </h3>
+        <button onclick="closeRulesModal()" class="p-1 text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs text-slate-600 leading-relaxed">
+        <div class="bg-orange-50/70 p-3 rounded-2xl border border-orange-100">
+          <div class="font-black text-orange-800 mb-0.5">STEP 01｜出發收集 🔍</div>
+          <p>前往 A、B、C 三個帳篷展區的各系攤位，掃描現場關鍵字 QR Code，一次解鎖該系 3 個關鍵字收入背包！</p>
+        </div>
+        <div class="bg-orange-50/70 p-3 rounded-2xl border border-orange-100">
+          <div class="font-black text-orange-800 mb-0.5">STEP 02｜跨區拼出名場面 ✍️</div>
+          <p>需收集包含 <b>A 區、B 區、C 區</b> 三個不同帳篷區域的科系，每區挑選 1 個關鍵字填入句子空格！</p>
+        </div>
+        <div class="bg-orange-50/70 p-3 rounded-2xl border border-orange-100">
+          <div class="font-black text-orange-800 mb-0.5">STEP 03｜挑選底圖或拍下故事 📸</div>
+          <p>可直接使用官方精選底圖，或自己拍攝現場照片作為背景，打造專屬紀念卡！</p>
+        </div>
+        <div class="bg-orange-50/70 p-3 rounded-2xl border border-orange-100">
+          <div class="font-black text-orange-800 mb-0.5">STEP 04｜生成專屬紀念卡 🎉</div>
+          <p>儲存紀念卡後，向服務台工作人員出示完成畫面並輸入核銷密碼，即可兌換活動小禮物（每支手機限領一次）。</p>
+        </div>
+      </div>
+
+      <button onclick="closeRulesModal()" class="w-full py-3 bg-slate-900 text-white font-black text-xs rounded-2xl">
+        我知道了，開始收集！
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL 5: 開發模擬器 & 47系 QR Code 一鍵產生器視窗 -->
+  <div id="devSimulatorModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl space-y-3 max-h-[88vh] flex flex-col">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2.5 shrink-0">
+        <div>
+          <h3 class="text-sm font-black text-slate-900 flex items-center gap-1.5">
+            <span>🛠️</span> 主辦測試與 QR Code 產生器
+          </h3>
+          <p class="text-[10px] text-slate-500">可模擬掃碼，或一鍵下載各系攤位專屬 QR Code</p>
+        </div>
+        <button onclick="closeDevSimulatorModal()" class="p-1 text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- 模式切換分頁 -->
+      <div class="grid grid-cols-2 gap-1 bg-slate-100 p-1 rounded-xl shrink-0">
+        <button id="devSubTabSim" onclick="switchDevSubTab('sim')" class="py-1.5 text-xs font-black rounded-lg bg-white text-slate-900 shadow-sm transition">
+          🧪 模擬掃碼收集
+        </button>
+        <button id="devSubTabQr" onclick="switchDevSubTab('qr')" class="py-1.5 text-xs font-black rounded-lg text-slate-500 hover:text-slate-800 transition">
+          📱 產生各系 QR Code
+        </button>
+      </div>
+
+      <!-- 分頁 A：模擬掃碼列表 -->
+      <div id="devDeptButtonsContainer" class="grid grid-cols-2 gap-1.5 overflow-y-auto pr-1 flex-1">
+      </div>
+
+      <!-- 分頁 B：QR Code 產生器面板 -->
+      <div id="devQrGeneratorPanel" class="hidden flex-1 overflow-y-auto space-y-3 pr-1">
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-2.5 space-y-1.5">
+          <label class="block text-[10px] font-black text-amber-900">網站基礎網址（自動偵測當前網址，可自行修改）：</label>
+          <input type="text" id="qrBaseUrlInput" oninput="updateSelectedDeptQrPreview()" class="w-full text-[11px] font-mono bg-white border border-amber-300 rounded-lg px-2.5 py-1.5 text-slate-800 focus:outline-none">
+        </div>
+
+        <div class="space-y-1">
+          <label class="block text-[11px] font-bold text-slate-600">選擇要產生 QR Code 的科系：</label>
+          <select id="qrDeptSelect" onchange="updateSelectedDeptQrPreview()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-bold text-slate-800">
+          </select>
+        </div>
+
+        <!-- QR Code 預覽與下載卡片 -->
+        <div class="bg-white border-2 border-slate-200 rounded-2xl p-4 flex flex-col items-center text-center space-y-2.5 shadow-sm">
+          <div id="qrTargetTitle" class="text-sm font-black text-slate-900">外文系（A 區）</div>
+          <div id="qrcodeRenderTarget" class="p-2 bg-white rounded-xl border border-slate-100 flex items-center justify-center"></div>
+          <div id="qrTargetUrlText" class="text-[10px] font-mono text-slate-400 break-all px-2"></div>
+          <button onclick="downloadGeneratedDeptQr()" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+            <span>下載此科系專屬 QR Code (PNG)</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="pt-2 border-t border-slate-100 shrink-0 text-[10px] text-slate-400 text-center">
+        正式上線請將程式碼上方 IS_DEV_MODE 設為 false
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== JAVASCRIPT 核心邏輯 ==================== -->
   <script>
     /* =====================================================================
-       0. 環境控制開關 (正式上架請將此處改為 false)
+       0. 環境控制開關與工作人員核銷密碼設定
        ===================================================================== */
-    const IS_DEV_MODE = true;
+    const IS_DEV_MODE = true;             // 正式上架請改為 false（仍可用 ?dev=1 開啟）
+    const STAFF_REDEEM_PIN = "2026";      // 工作人員核銷密碼（可依需求自行修改）
 
     /* =====================================================================
-       1. 資料結構設定 (科系資料、句子模板、顏色)
+       1. 資料結構設定 (帳篷分區、官方底圖、科系資料、句子模板、顏色)
        ===================================================================== */
-    const STORAGE_KEY = "bike_festival_backpack_v2";
+    const STORAGE_KEY = "bike_festival_backpack_v3";
+    const REDEEM_STORAGE_KEY = "bike_festival_redeemed_v1";
+    const IDB_NAME = "BikeFestivalDB";
+    const IDB_STORE = "AppStateStore";
 
-    const DEPARTMENT_DATA = [
-      // 文學院
-      { id: "cl", name: "中文系", category: "文學院", keywords: ["說文解字", "孔子迷因", "筆墨春秋"] },
-      { id: "fllo", name: "外文系", category: "文學院", keywords: ["父母的二手車", "晶晶體達人", "人體英文字典"] },
-      { id: "his", name: "歷史系", category: "文學院", keywords: ["穿越時空", "考據狂人", "歷史不是故事"] },
-      { id: "twl", name: "台文系", category: "文學院", keywords: ["鄉土情懷", "母語傳承者", "在地記憶"] },
+    const TENT_ZONES = {
+      A: { id: "A", name: "A 區", fullName: "A 區・光復操場帳篷區", badgeBg: "bg-rose-100", badgeText: "text-rose-700", dot: "bg-rose-500" },
+      B: { id: "B", name: "B 區", fullName: "B 區・榕園大道帳篷區", badgeBg: "bg-sky-100", badgeText: "text-sky-700", dot: "bg-sky-500" },
+      C: { id: "C", name: "C 區", fullName: "C 區・雲平林蔭帳篷區", badgeBg: "bg-emerald-100", badgeText: "text-emerald-700", dot: "bg-emerald-500" }
+    };
 
-      // 理學院
-      { id: "math", name: "數學系", category: "理學院", keywords: ["微積分大師", "抽象空間", "證明神邏輯"] },
-      { id: "phys", name: "物理系", category: "理學院", keywords: ["薛丁格的貓", "宇宙大爆炸", "力學天花板"] },
-      { id: "chem", name: "化學系", category: "理學院", keywords: ["結預報寫不完", "科學怪人", "有機無機物化分析"] },
-      { id: "es", name: "地科系", category: "理學院", keywords: ["挖石頭高手", "地震雷達", "地質野外狂"] },
-      { id: "ps", name: "光電系", category: "理學院", keywords: ["光波引導者", "雷射大師", "光子漫遊"] },
+    const PRESET_CARD_THEMES = [
+      { id: "orange", name: "活力單車橙", colors: ["#ea580c", "#f59e0b", "#9a3412"], icon: "🚲", thumbBg: "from-orange-500 to-amber-500" },
+      { id: "banyan", name: "成大榕園綠", colors: ["#059669", "#10b981", "#064e3b"], icon: "🌳", thumbBg: "from-emerald-600 to-teal-500" },
+      { id: "sunset", name: "府城夕陽紫", colors: ["#7c3aed", "#ec4899", "#4c1d95"], icon: "🌇", thumbBg: "from-violet-600 to-pink-500" },
+      { id: "night",  name: "星空夜騎藍", colors: ["#1d4ed8", "#0284c7", "#0f172a"], icon: "✨", thumbBg: "from-blue-700 to-slate-900" }
+    ];
 
-      // 管理學院
-      { id: "acc", name: "會計系", category: "管理學院", keywords: ["借貸必平衡", "四大会計師", "按計算機達人"] },
-      { id: "stat", name: "統計系", category: "管理學院", keywords: ["常態分佈", "P值決定論", "大數據預言家"] },
-      { id: "ba", name: "工資管系", category: "管理學院", keywords: ["排程最佳化", "系統大師", "管理兼工程"] },
-      { id: "tran", name: "交管系", category: "管理學院", keywords: ["紅綠燈先知", "物流大腦", "鐵道迷同好"] },
-      { id: "ib", name: "國企系", category: "管理學院", keywords: ["商業競賽霸主", "全球思維", "簡報演說家"] },
-
-      // 電資學院
-      { id: "ee", name: "電機系", category: "電資學院", keywords: ["電", "肝", "錢"] },
-      { id: "csie", name: "資訊系", category: "電資學院", keywords: ["Bug比頭髮多", "鍵盤魔法師", "終生不睡覺"] },
-
-      // 工學院
-      { id: "me", name: "機械系", category: "工學院", keywords: ["黑手傳奇", "CAD畫不停", "機構王者"] },
-      { id: "che", name: "化工系", category: "工學院", keywords: ["單元操作", "反應器守門人", "流力之神"] },
-      { id: "mse", name: "材料系", category: "工學院", keywords: ["看顯微鏡長大", "晶格缺陷", "金屬高分子"] },
-      { id: "ce", name: "土木系", category: "工學院", keywords: ["結構技師", "抗震英雄", "混凝土守護者"] },
-      { id: "hyd", name: "水利系", category: "工學院", keywords: ["水流操控者", "治水神算", "流體力學達人"] },
-      { id: "bme", name: "生醫工系", category: "工學院", keywords: ["醫療跨界王", "仿生晶片", "智慧醫療先鋒"] },
-      { id: "ese", name: "環工系", category: "工學院", keywords: ["水質檢測", "綠能永續", "地球清道夫"] },
-      { id: "ge", name: "測量系", category: "工學院", keywords: ["地圖繪製家", "衛星定位神人", "空拍測繪"] },
-      { id: "naoe", name: "系工系", category: "工學院", keywords: ["造船狂人", "海洋工程", "潛水艇設計"] },
-      { id: "aero", name: "航太系", category: "工學院", keywords: ["造火箭的人", "飛機設計師", "超音速漫遊"] },
-      { id: "re", name: "資工物產系", category: "工學院", keywords: ["綠色能源", "地球資源", "地熱採集者"] },
-
-      // 規設院
-      { id: "arch", name: "建築系", category: "規設院", keywords: ["日出觀察者", "模型切到手", "評圖大逃殺"] },
-      { id: "up", name: "都計系", category: "規設院", keywords: ["都市規劃腦", "空拍總覽", "土地利用策劃"] },
-      { id: "id", name: "工設系", category: "規設院", keywords: ["靈感製造機", "手繪草圖王", "模型磨到亮"] },
-
-      // 社科學院
-      { id: "pol", name: "政治系", category: "社科學院", keywords: ["權力遊戲", "政策思辨", "國際局勢分析"] },
-      { id: "econ", name: "經濟系", category: "社科學院", keywords: ["看不見的手", "供需平衡", "賽局理論大師"] },
-      { id: "law", name: "法律系", category: "社科學院", keywords: ["六法全書", "法條背誦機", "公平正義捍衛者"] },
-      { id: "psy", name: "心理系", category: "社科學院", keywords: ["讀心術迷思", "認知行為", "統計與實驗"] },
-
-      // 生科與生技院
-      { id: "ls", name: "生科系", category: "生科學院", keywords: ["PCR跑不停", "顯微鏡觀察家", "演化探索者"] },
-      { id: "bst", name: "生技系", category: "生科學院", keywords: ["基因剪刀手", "培養基魔法", "疫苗研發先鋒"] },
-
-      // 醫學院
-      { id: "med", name: "醫學系", category: "醫學院", keywords: ["共筆戰神", "白色巨塔NPC", "國考馬拉松"] },
-      { id: "nur", name: "護理系", category: "醫學院", keywords: ["白衣天使", "三班輪值高手", "靜脈注射達人"] },
-      { id: "pt", name: "物治系", category: "醫學院", keywords: ["筋骨整復師", "肌力評估神手", "運動防護員"] },
-      { id: "ot", name: "職治系", category: "醫學院", keywords: ["日常功能重塑", "副木雕刻家", "身心療癒師"] },
-      { id: "mt", name: "醫檢系", category: "醫學院", keywords: ["血液分析先知", "細菌培養專員", "精準檢驗者"] },
-      { id: "pharm", name: "藥學系", category: "醫學院", keywords: ["調劑大師", "藥理百科", "處方守門人"] },
-      { id: "dent", name: "牙醫系", category: "醫學院", keywords: ["雕齒工藝家", "牙齒雕刻王", "微笑設計師"] }
+    const KEYWORD_COLORS = [
+      { bg: "#f97316", text: "#ffffff", name: "活力橘" },
+      { bg: "#0284c7", text: "#ffffff", name: "成大藍" },
+      { bg: "#7c3aed", text: "#ffffff", name: "魅力紫" }
     ];
 
     const SENTENCE_TEMPLATES = [
       {
-        id: "tmpl_1",
-        text: "傳說只要集齊＿＿、＿＿和＿＿，就能解開成大的終極秘密。",
+        preview: "傳說只要集齊＿＿、＿＿和＿＿，就能解開成大的終極秘密。",
         parts: ["傳說只要集齊", "、", "和", "，就能解開成大的終極秘密。"]
       },
       {
-        id: "tmpl_2",
-        text: "那一天，＿＿遇見了＿＿，才發現這一切都是＿＿的陰謀。",
+        preview: "那一天，＿＿遇見了＿＿，才發現這一切都是＿＿的陰謀。",
         parts: ["那一天，", "遇見了", "，才發現這一切都是", "的陰謀。"]
       },
       {
-        id: "tmpl_3",
-        text: "在成大單車節，拿著＿＿的我和＿＿，一起見證了＿＿的誕生！",
-        parts: ["在成大單車節，拿著", "的我和", "，一起見證了", "的誕生！"]
+        preview: "在單車節的盡頭，我一手拿著＿＿，一手抱著＿＿，大喊一聲：＿＿！",
+        parts: ["在單車節的盡頭，我一手拿著", "，一手抱著", "，大喊一聲：", "！"]
       },
       {
-        id: "tmpl_4",
-        text: "原以為大學生活充滿了＿＿與＿＿，沒想到最後拯救我的竟然是＿＿。",
-        parts: ["原以為大學生活充滿了", "與", "，沒想到最後拯救我的竟然是", "。"]
+        preview: "別人逛單車節都在看表演，只有我在煩惱＿＿、＿＿還有＿＿。",
+        parts: ["別人逛單車節都在看表演，只有我在煩惱", "、", "還有", "。"]
+      },
+      {
+        preview: "如果大學生活是一場冒險，那＿＿就是武器，＿＿是隊友，而＿＿是最終大魔王。",
+        parts: ["如果大學生活是一場冒險，那", "就是武器，", "是隊友，而", "是最終大魔王。"]
       }
     ];
 
-    const KEYWORD_COLORS = [
-      { bg: "#f97316", text: "#ffffff" },
-      { bg: "#06b6d4", text: "#ffffff" },
-      { bg: "#a855f7", text: "#ffffff" }
+    const DEPARTMENT_DATA = [
+      { id: "fllo", name: "外文系", zone: "A", category: "文學院", keywords: ["父母的二手車", "晶晶體達人", "人體英文字典"] },
+      { id: "chem", name: "化學系", zone: "B", category: "理學院", keywords: ["結預報寫不完", "科學怪人", "有機無機物化分析"] },
+      { id: "ee", name: "電機系", zone: "C", category: "電機資訊學院", keywords: ["電", "肝", "錢"] },
+      { id: "cl", name: "中文系", zone: "A", category: "文學院", keywords: ["之乎者也", "文青氣質", "藏頭詩大師"] },
+      { id: "hist", name: "歷史系", zone: "B", category: "文學院", keywords: ["古蹟活地圖", "以古鑑今", "時間管理大師"] },
+      { id: "twl", name: "台文系", zone: "C", category: "文學院", keywords: ["在地文化魂", "母語超流利", "田野調查王"] },
+      { id: "math", name: "數學系", zone: "A", category: "理學院", keywords: ["證明題地獄", "沒有數字的數學", "希臘字母全餐"] },
+      { id: "phys", name: "物理系", zone: "B", category: "理學院", keywords: ["萬物皆可近似", "牛頓的蘋果", "量子糾纏"] },
+      { id: "earth", name: "地科系", zone: "C", category: "理學院", keywords: ["石頭收藏家", "上知天文下知地理", "地震速報員"] },
+      { id: "photonics", name: "光電系", zone: "A", category: "理學院", keywords: ["雷射光束", "追光者", "無塵室日常"] },
+      { id: "me", name: "機械系", zone: "B", category: "工學院", keywords: ["黑手工程師", "齒輪與螺絲", "畫不完的工程圖"] },
+      { id: "che", name: "化工系", zone: "C", category: "工學院", keywords: ["單元操作", "管線迷宮", "工廠模擬器"] },
+      { id: "mse", name: "材料系", zone: "A", category: "工學院", keywords: ["結構決定性質", "顯微鏡下的世界", "煉金術士"] },
+      { id: "ce", name: "土木系", zone: "B", category: "工學院", keywords: ["鋼筋混凝土", "測量太陽底下", "蓋大樓專家"] },
+      { id: "hyd", name: "水利系", zone: "C", category: "工學院", keywords: ["治水大禹", "流體力學", "海洋與河川"] },
+      { id: "es", name: "工科系", zone: "A", category: "工學院", keywords: ["跨領域全才", "什麼都學一點", "系統整合王"] },
+      { id: "sname", name: "系統系", zone: "B", category: "工學院", keywords: ["造船與海洋", "乘風破浪", "機電整合"] },
+      { id: "aa", name: "航太系", zone: "C", category: "工學院", keywords: ["火箭升空", "空氣動力學", "飛向宇宙浩瀚無垠"] },
+      { id: "ev", name: "環工系", zone: "A", category: "工學院", keywords: ["地球守護者", "水質檢測", "永續發展先鋒"] },
+      { id: "geomatics", name: "測量系", zone: "B", category: "工學院", keywords: ["衛星定位", "無人機空拍", "精準每一公分"] },
+      { id: "bme", name: "醫工系", zone: "C", category: "工學院", keywords: ["醫療器材魔法師", "工程結合醫學", "仿生科技"] },
+      { id: "energy", name: "能源學程", zone: "A", category: "工學院", keywords: ["綠能發電", "碳中和達人", "未來能源推手"] },
+      { id: "iim", name: "工資系", zone: "B", category: "管理學院", keywords: ["最佳化大師", "流程管理", "效率至上"] },
+      { id: "tcm", name: "交管系", zone: "C", category: "管理學院", keywords: ["紅綠燈秒數計算", "疏運專家", "大眾運輸達人"] },
+      { id: "ba", name: "企管系", zone: "A", category: "管理學院", keywords: ["簡報製作神手", "SWOT分析", "商業頭腦"] },
+      { id: "stat", name: "統計系", zone: "B", category: "管理學院", keywords: ["常態分佈", "大數據預言家", "P值小於0.05"] },
+      { id: "acc", name: "會計系", zone: "C", category: "管理學院", keywords: ["借貸必相等", "計算機按到飛起", "財報偵探"] },
+      { id: "ib", name: "國企所/學程", zone: "A", category: "管理學院", keywords: ["全球視野", "跨國談判", "外語簡報王"] },
+      { id: "med", name: "醫學系", zone: "B", category: "醫學院", keywords: ["白袍榮耀", "共筆山脈", "人體百科全書"] },
+      { id: "dent", name: "牙醫系", zone: "C", category: "醫學院", keywords: ["雕牙藝術家", "微笑曲線", "精準手作魂"] },
+      { id: "pharm", name: "藥學系", zone: "A", category: "醫學院", keywords: ["藥物交互作用", "背不完的藥名", "精準調劑"] },
+      { id: "nurs", name: "護理系", zone: "B", category: "醫學院", keywords: ["南丁格爾精神", "技術考不完", "溫柔又堅強"] },
+      { id: "mt", name: "醫技系", zone: "C", category: "醫學院", keywords: ["幕後檢驗英雄", "顯微鏡偵探", "抽血一針入魂"] },
+      { id: "pt", name: "物治系", zone: "A", category: "醫學院", keywords: ["肌動學大師", "運動傷害救星", "姿勢矯正專家"] },
+      { id: "ot", name: "職治系", zone: "B", category: "醫學院", keywords: ["生活功能重建", "輔具設計", "全人關懷"] },
+      { id: "ps", name: "政治系", zone: "C", category: "社會科學院", keywords: ["國際情勢分析", "辯論場常客", "政策觀察家"] },
+      { id: "econ", name: "經濟系", zone: "A", category: "社會科學院", keywords: ["供給與需求", "看不見的手", "理性選擇"] },
+      { id: "law", name: "法律系", zone: "B", category: "社會科學院", keywords: ["六法全書當枕頭", "視情況而定", "邏輯辯證王"] },
+      { id: "psy", name: "心理系", zone: "C", category: "社會科學院", keywords: ["我不會讀心術", "大腦奧秘", "實驗受試者"] },
+      { id: "csie", name: "資訊系", zone: "A", category: "電機資訊學院", keywords: ["Hello World", "Debug到天亮", "咖啡因轉化器"] },
+      { id: "arch", name: "建築系", zone: "B", category: "規劃與設計學院", keywords: ["熬夜做模型", "美感偏執狂", "結構與空間"] },
+      { id: "up", name: "都計系", zone: "C", category: "規劃與設計學院", keywords: ["城市模擬市民", "土地使用分區", "宜居城市規劃師"] },
+      { id: "id", name: "工設系", zone: "A", category: "規劃與設計學院", keywords: ["產品靈魂設計師", "草圖畫不完", "使用者體驗"] },
+      { id: "ls", name: "生科系", zone: "B", category: "生物科學與科技學院", keywords: ["PCR跑膠", "養細胞保母", "基因密碼解碼"] },
+      { id: "btech", name: "生技系", zone: "C", category: "生物科學與科技學院", keywords: ["生物科技前沿", "實驗室日常", "蛋白質純化"] },
+      { id: "an", name: "全校不分系", zone: "A", category: "敏求智慧運算學院", keywords: ["自主學習規劃師", "跨界探索者", "不被定義的青春"] },
+      { id: "ai", name: "智慧運算學程", zone: "B", category: "敏求智慧運算學院", keywords: ["神經網路訓練", "AI模型調參", "演算法魔術師"] }
     ];
 
     /* =====================================================================
-       2. 核心全域狀態 (State Management)
+       2. 核心全域狀態與多重持久化儲存
        ===================================================================== */
     const state = {
       backpack: [],
@@ -699,115 +613,146 @@
       selectedTemplateIndex: 0,
       isScannerActive: false,
       html5QrScanner: null,
-      cardBackgroundImage: null
+      cardBackgroundImage: null,
+      selectedPresetThemeId: "orange",
+      redeemInfo: null
     };
 
-    function loadBackpackFromStorage() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) {
-          state.backpack = JSON.parse(raw);
+    function openIndexedDB() {
+      return new Promise((resolve, reject) => {
+        if (!window.indexedDB) {
+          reject("IndexedDB not supported");
+          return;
         }
+        const request = indexedDB.open(IDB_NAME, 1);
+        request.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains(IDB_STORE)) {
+            db.createObjectStore(IDB_STORE);
+          }
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    async function saveToIndexedDB(key, val) {
+      try {
+        const db = await openIndexedDB();
+        const tx = db.transaction(IDB_STORE, "readwrite");
+        tx.objectStore(IDB_STORE).put(val, key);
+      } catch (e) {}
+    }
+
+    async function loadFromIndexedDB(key) {
+      try {
+        const db = await openIndexedDB();
+        return new Promise((resolve) => {
+          const tx = db.transaction(IDB_STORE, "readonly");
+          const req = tx.objectStore(IDB_STORE).get(key);
+          req.onsuccess = () => resolve(req.result || null);
+          req.onerror = () => resolve(null);
+        });
       } catch (e) {
-        console.error("載入背包失敗", e);
-        state.backpack = [];
+        return null;
+      }
+    }
+
+    function setBackupCookie(name, value) {
+      try {
+        const expires = new Date(Date.now() + 30 * 864e5).toUTCString();
+        document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
+      } catch (e) {}
+    }
+
+    function getBackupCookie(name) {
+      try {
+        const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+        return match ? decodeURIComponent(match[2]) : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    async function loadAllPersistentData() {
+      let loadedBackpack = null;
+      try {
+        const lsRaw = localStorage.getItem(STORAGE_KEY);
+        if (lsRaw) loadedBackpack = JSON.parse(lsRaw);
+      } catch (e) {}
+
+      if (!loadedBackpack || loadedBackpack.length === 0) {
+        const idbData = await loadFromIndexedDB(STORAGE_KEY);
+        if (idbData && Array.isArray(idbData) && idbData.length > 0) {
+          loadedBackpack = idbData;
+        }
+      }
+
+      if (!loadedBackpack || loadedBackpack.length === 0) {
+        const cookieDepts = getBackupCookie("bf_depts");
+        if (cookieDepts) {
+          const deptIds = cookieDepts.split(",").filter(Boolean);
+          loadedBackpack = [];
+          deptIds.forEach(dId => {
+            const dept = DEPARTMENT_DATA.find(d => d.id === dId);
+            if (dept) {
+              dept.keywords.forEach(kw => {
+                loadedBackpack.push({ deptId: dept.id, deptName: dept.name, zone: dept.zone, keyword: kw, acquiredAt: Date.now() });
+              });
+            }
+          });
+        }
+      }
+
+      state.backpack = Array.isArray(loadedBackpack) ? loadedBackpack : [];
+      if (state.backpack.length > 0) {
+        saveBackpackToStorage();
+      }
+
+      let loadedRedeem = null;
+      try {
+        const lsRedeem = localStorage.getItem(REDEEM_STORAGE_KEY);
+        if (lsRedeem) loadedRedeem = JSON.parse(lsRedeem);
+      } catch (e) {}
+
+      if (!loadedRedeem) {
+        loadedRedeem = await loadFromIndexedDB(REDEEM_STORAGE_KEY);
+      }
+
+      if (!loadedRedeem) {
+        const cookieRedeem = getBackupCookie("bf_redeemed");
+        if (cookieRedeem) {
+          loadedRedeem = { redeemed: true, time: cookieRedeem };
+        }
+      }
+
+      state.redeemInfo = loadedRedeem || null;
+      if (state.redeemInfo && state.redeemInfo.redeemed) {
+        saveRedeemStateToStorage();
       }
     }
 
     function saveBackpackToStorage() {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state.backpack));
-      } catch (e) {
-        console.error("儲存背包失敗", e);
-      }
+      } catch (e) {}
+      saveToIndexedDB(STORAGE_KEY, state.backpack);
+      const uniqueDeptIds = Array.from(new Set(state.backpack.map(i => i.deptId))).join(",");
+      setBackupCookie("bf_depts", uniqueDeptIds);
+    }
+
+    function saveRedeemStateToStorage() {
+      if (!state.redeemInfo) return;
+      try {
+        localStorage.setItem(REDEEM_STORAGE_KEY, JSON.stringify(state.redeemInfo));
+      } catch (e) {}
+      saveToIndexedDB(REDEEM_STORAGE_KEY, state.redeemInfo);
+      setBackupCookie("bf_redeemed", state.redeemInfo.time);
     }
 
     /* =====================================================================
        3. 掃描與收集關鍵字邏輯
        ===================================================================== */
-    function checkUrlParametersForAutoCollect() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const deptId = urlParams.get("dept");
-
-      if (deptId) {
-        const dept = DEPARTMENT_DATA.find(d => d.id === deptId);
-        if (dept) {
-          collectDepartmentAllKeywords(dept.id, dept.name, dept.keywords);
-          window.history.replaceState({}, document.title, window.location.pathname);
-        }
-      }
-    }
-
-    function collectDepartmentAllKeywords(deptId, deptName, keywords) {
-      const newItems = [];
-      keywords.forEach(kw => {
-        if (!state.backpack.some(item => item.deptId === deptId && item.keyword === kw)) {
-          newItems.push({
-            deptId: deptId,
-            deptName: deptName,
-            keyword: kw,
-            acquiredAt: Date.now()
-          });
-        }
-      });
-
-      if (newItems.length === 0) {
-        showToast(`💡【${deptName}】的 3 個關鍵字已經都在你的背包裡囉！`);
-        return;
-      }
-
-      state.backpack.push(...newItems);
-      saveBackpackToStorage();
-      renderBackpackUI();
-      renderCraftUI();
-
-      showCollectedModal(deptName, keywords);
-
-      try {
-        confetti({
-          particleCount: 65,
-          spread: 70,
-          origin: { y: 0.6 }
-        });
-      } catch (e) {}
-    }
-
-    function showCollectedModal(deptName, keywords) {
-      document.getElementById("collectedDeptName").innerText = deptName;
-      const listEl = document.getElementById("collectedKeywordsList");
-      listEl.innerHTML = keywords.map(kw => `
-        <div class="bg-orange-500 text-white font-black text-xs py-1.5 px-3 rounded-xl shadow-xs tracking-wide">
-          ✨ ${kw}
-        </div>
-      `).join('');
-      document.getElementById("collectedSuccessModal").classList.remove("hidden");
-    }
-
-    function dismissSuccessModal() {
-      document.getElementById("collectedSuccessModal").classList.add("hidden");
-    }
-
-    function dismissSuccessModalAndGoCraft() {
-      dismissSuccessModal();
-      switchTab("tab-craft");
-    }
-
-    /* =====================================================================
-       4. 相機掃描器控制 (Html5Qrcode)
-       ===================================================================== */
-    function toggleCameraScanner() {
-      const wrapper = document.getElementById("scannerWrapper");
-      const btnText = document.getElementById("scannerBtnText");
-
-      if (state.isScannerActive) {
-        stopCameraScanner();
-      } else {
-        wrapper.classList.remove("hidden");
-        btnText.innerText = "關閉相機";
-        startCameraScanner();
-      }
-    }
-
     function startCameraScanner() {
       if (typeof Html5Qrcode === "undefined") {
         showToast("相機掃描元件載入中，請稍候...");
@@ -815,7 +760,15 @@
       }
 
       state.html5QrScanner = new Html5Qrcode("qr-reader");
-      const config = { fps: 10, qrbox: { width: 220, height: 220 } };
+      const config = {
+        fps: 10,
+        qrbox: function(viewfinderWidth, viewfinderHeight) {
+          const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+          const boxSize = Math.floor(minEdge * 0.72);
+          return { width: Math.max(160, boxSize), height: Math.max(160, boxSize) };
+        },
+        aspectRatio: 1.0
+      };
 
       state.html5QrScanner.start(
         { facingMode: "environment" },
@@ -827,16 +780,52 @@
         () => {}
       ).then(() => {
         state.isScannerActive = true;
-      }).catch(err => {
-        console.error("相機權限或啟動失敗", err);
-        showToast("無法開啟相機，請檢查瀏覽器相機權限或使用模擬器測試");
+      }).catch(async () => {
+        try {
+          const cameras = await Html5Qrcode.getCameras();
+          if (cameras && cameras.length > 0) {
+            const backCam = cameras.find(c => /back|rear|environment/i.test(c.label)) || cameras[cameras.length - 1];
+            await state.html5QrScanner.start(
+              backCam.id,
+              config,
+              (decodedText) => {
+                handleDecodedQr(decodedText);
+                stopCameraScanner();
+              },
+              () => {}
+            );
+            state.isScannerActive = true;
+            return;
+          }
+        } catch (fallbackErr) {}
+        showToast("相機無法直接開啟（若使用 LINE/IG 請改點下方「拍 QR 照片掃描」或用 Chrome/Safari 開啟）");
         stopCameraScanner();
       });
     }
 
+    async function handleQrImageFileScan(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      if (typeof Html5Qrcode === "undefined") {
+        showToast("掃描元件載入中，請稍候再試");
+        return;
+      }
+
+      showToast("🔍 正在辨識照片中的 QR Code...");
+      try {
+        const fileScanner = new Html5Qrcode("qr-file-reader");
+        const decodedText = await fileScanner.scanFile(file, true);
+        fileScanner.clear();
+        handleDecodedQr(decodedText);
+      } catch (err) {
+        showToast("❌ 無法從照片辨識到清晰的 QR Code，請對準拍清楚一點再試一次！");
+      } finally {
+        event.target.value = "";
+      }
+    }
+
     function stopCameraScanner() {
-      const wrapper = document.getElementById("scannerWrapper");
-      const btnText = document.getElementById("scannerBtnText");
       if (state.html5QrScanner && state.isScannerActive) {
         state.html5QrScanner.stop().then(() => {
           state.html5QrScanner.clear();
@@ -845,211 +834,126 @@
           state.isScannerActive = false;
         });
       }
-      wrapper.classList.add("hidden");
-      btnText.innerText = "開啟相機";
+      const wrapper = document.getElementById("scannerWrapper");
+      if (wrapper) wrapper.classList.add("hidden");
     }
 
-    function handleDecodedQr(rawText) {
-      try {
-        let deptId = null;
-
-        if (rawText.startsWith("http://") || rawText.startsWith("https://")) {
-          const url = new URL(rawText);
-          deptId = url.searchParams.get("dept");
-        } else if (rawText.startsWith("{")) {
-          const data = JSON.parse(rawText);
-          deptId = data.dept;
-        } else {
-          deptId = rawText.split(":")[0].trim();
-        }
-
-        if (deptId) {
-          const deptObj = DEPARTMENT_DATA.find(d => d.id === deptId);
-          if (deptObj) {
-            collectDepartmentAllKeywords(deptObj.id, deptObj.name, deptObj.keywords);
-            return;
-          }
-        }
-
-        showToast("未知的單車節 QR Code 內容格式");
-      } catch (e) {
-        showToast("QR Code 解析失敗：" + rawText);
+    function toggleCameraScanner() {
+      const wrapper = document.getElementById("scannerWrapper");
+      if (!wrapper) return;
+      if (state.isScannerActive) {
+        stopCameraScanner();
+      } else {
+        wrapper.classList.remove("hidden");
+        startCameraScanner();
       }
     }
 
-    /* =====================================================================
-       5. 測試模擬器 (Dev Simulator)
-       ===================================================================== */
-    function populateDevSimulator() {
-      const container = document.getElementById("devDeptList");
-      container.innerHTML = `
-        <div class="mb-2 p-2 bg-indigo-50 border border-indigo-200 rounded-xl flex items-center justify-between">
-          <span class="text-xs font-bold text-indigo-900">總計 ${DEPARTMENT_DATA.length} 個科系</span>
-          <button onclick="openQrPrintModal()" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded-lg font-bold">
-            查看 QR 格式與代碼
-          </button>
-        </div>
-      `;
+    function handleDecodedQr(decodedText) {
+      let targetDeptId = null;
+      try {
+        if (decodedText.includes("?")) {
+          const urlObj = new URL(decodedText);
+          targetDeptId = urlObj.searchParams.get("dept");
+        } else {
+          targetDeptId = decodedText.trim();
+        }
+      } catch (e) {
+        targetDeptId = decodedText.trim();
+      }
 
-      DEPARTMENT_DATA.forEach(dept => {
-        const card = document.createElement("div");
-        card.className = "p-2.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between";
-        card.innerHTML = `
-          <div>
-            <div class="flex items-center gap-1.5">
-              <span class="font-bold text-xs text-slate-800">${dept.name}</span>
-              <span class="text-[10px] text-slate-400">(${dept.category})</span>
-            </div>
-            <div class="text-[10px] text-slate-500 mt-0.5">
-              ${dept.keywords.join("、")}
-            </div>
-          </div>
-          <button onclick="simulateScan('${dept.id}')" class="shrink-0 text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1.5 rounded-xl font-bold transition active:scale-95 shadow-xs">
-            解鎖全系
-          </button>
-        `;
-        container.appendChild(card);
-      });
+      if (!targetDeptId) {
+        showToast("❌ 無法識別此 QR Code，請確認是否為活動專屬條碼");
+        return;
+      }
+
+      collectDepartmentKeywords(targetDeptId);
     }
 
-    function openQrPrintModal() {
-      const modal = document.getElementById("qrPrintModal");
-      const list = document.getElementById("allDeptsQrInfo");
-      const currentHost = window.location.origin + window.location.pathname;
-      document.getElementById("sampleQrUrl").innerText = `${currentHost}?dept=fllo`;
+    function collectDepartmentKeywords(deptId) {
+      const dept = DEPARTMENT_DATA.find(d => d.id.toLowerCase() === deptId.toLowerCase());
+      if (!dept) {
+        showToast("❌ 找不到對應的科系資料");
+        return;
+      }
 
-      list.innerHTML = DEPARTMENT_DATA.map(d => `
-        <div class="p-2 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between">
-          <div>
-            <strong>${d.name}</strong> <span class="text-slate-400">(${d.id})</span>
-            <div class="text-[11px] text-slate-500">${d.keywords.join(" | ")}</div>
-          </div>
-          <code class="text-[10px] text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded font-mono select-all">
-            ?dept=${d.id}
-          </code>
-        </div>
-      `).join('');
+      const alreadyHasDept = state.backpack.some(item => item.deptId === dept.id);
+      if (alreadyHasDept) {
+        showToast(`ℹ️ 你已經收集過【${dept.name}】的關鍵字囉！`);
+        return;
+      }
+
+      const now = Date.now();
+      dept.keywords.forEach(kw => {
+        state.backpack.push({
+          deptId: dept.id,
+          deptName: dept.name,
+          zone: dept.zone,
+          keyword: kw,
+          acquiredAt: now
+        });
+      });
+
+      saveBackpackToStorage();
+      renderAllTabs();
+      showCollectSuccessModal(dept);
+      triggerConfetti();
+    }
+
+    function checkUrlParametersForAutoCollect() {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const deptParam = params.get("dept");
+        if (deptParam) {
+          collectDepartmentKeywords(deptParam);
+          const cleanUrl = window.location.origin + window.location.pathname;
+          window.history.replaceState({}, document.title, cleanUrl);
+        }
+      } catch (e) {}
+    }
+
+    /* =====================================================================
+       4. 彈窗與提示訊息控制
+       ===================================================================== */
+    function showToast(msg) {
+      const toast = document.getElementById("toastMessage");
+      if (!toast) return;
+      toast.innerText = msg;
+      toast.classList.remove("hidden");
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => {
+        toast.classList.add("hidden");
+      }, 3200);
+    }
+
+    function showCollectSuccessModal(dept) {
+      const modal = document.getElementById("collectSuccessModal");
+      const deptLabel = document.getElementById("modalCollectedDeptName");
+      const kwContainer = document.getElementById("modalCollectedKeywords");
+      if (!modal || !deptLabel || !kwContainer) return;
+
+      const zoneInfo = TENT_ZONES[dept.zone] || TENT_ZONES.A;
+      deptLabel.innerText = `你獲得了【${dept.name}】（${zoneInfo.name}）的全部 3 個關鍵字！`;
+      kwContainer.innerHTML = dept.keywords.map(kw =>
+        `<span class="px-3 py-1.5 bg-orange-100 text-orange-800 font-black text-xs rounded-xl border border-orange-200">${kw}</span>`
+      ).join("");
 
       modal.classList.remove("hidden");
     }
 
-    function closeQrPrintModal() {
-      document.getElementById("qrPrintModal").classList.add("hidden");
-    }
-
-    function simulateScan(deptId) {
-      toggleDevModal();
-      const deptObj = DEPARTMENT_DATA.find(d => d.id === deptId);
-      if (deptObj) {
-        collectDepartmentAllKeywords(deptObj.id, deptObj.name, deptObj.keywords);
-      }
-    }
-
-    function toggleDevModal() {
-      const modal = document.getElementById("devModal");
-      modal.classList.toggle("hidden");
-    }
-
-    /* =====================================================================
-       6. 渲染背包介面
-       ===================================================================== */
-    function renderBackpackUI() {
-      const countBadge = document.getElementById("collectedCountBadge");
-      const quickPills = document.getElementById("quickBackpackPills");
-      const fullList = document.getElementById("backpackFullList");
-      const goCraftBtn = document.getElementById("goCraftBtn");
-      const navDot = document.getElementById("navBackpackDot");
-      const prompt = document.getElementById("backpackPrompt");
-
-      const uniqueDepts = new Set(state.backpack.map(item => item.deptId));
-      countBadge.innerText = `已收集 ${uniqueDepts.size} 個系 (${state.backpack.length} 個詞)`;
-
-      if (state.backpack.length > 0) {
-        navDot.classList.remove("hidden");
-      } else {
-        navDot.classList.add("hidden");
-      }
-
-      if (uniqueDepts.size >= 3) {
-        goCraftBtn.disabled = false;
-        goCraftBtn.classList.remove("bg-slate-300", "cursor-not-allowed");
-        goCraftBtn.classList.add("bg-orange-600", "hover:bg-orange-700", "glow-orange");
-        prompt.innerHTML = `🎉 太棒了！你已收集 <strong class="text-emerald-600">${uniqueDepts.size} 個系（共 ${state.backpack.length} 個關鍵字）</strong>，已滿足 3 系造句門檻！`;
-      } else {
-        goCraftBtn.disabled = true;
-        goCraftBtn.classList.add("bg-slate-300", "cursor-not-allowed");
-        goCraftBtn.classList.remove("bg-orange-600", "hover:bg-orange-700", "glow-orange");
-        prompt.innerHTML = `每掃一系即可獲取 3 個關鍵字，還差 <strong class="text-orange-600">${3 - uniqueDepts.size} 個不同科系</strong> 即可開始造句！`;
-      }
-
-      if (state.backpack.length === 0) {
-        quickPills.innerHTML = `<span class="text-xs text-slate-400 py-1">背包目前空空如也，趕緊去逛攤位吧！</span>`;
-      } else {
-        quickPills.innerHTML = state.backpack.map(item => `
-          <span class="inline-flex items-center gap-1 bg-white border border-orange-200 text-orange-800 text-[11px] font-bold px-2 py-1 rounded-lg shadow-2xs">
-            <span class="text-[9px] text-orange-500 font-semibold">[${item.deptName}]</span>
-            <span>${item.keyword}</span>
-          </span>
-        `).join('');
-      }
-
-      if (state.backpack.length === 0) {
-        fullList.innerHTML = `
-          <div class="text-center py-12 bg-white rounded-2xl border border-dashed border-slate-300 p-6">
-            <span class="text-4xl block mb-2">🎒</span>
-            <p class="text-sm font-bold text-slate-700">背包裡還沒有任何關鍵字</p>
-            <p class="text-xs text-slate-400 mt-1">至各攤位掃描 QR Code，或點擊右上角「模擬器」測試！</p>
-            <button onclick="switchTab('tab-scan')" class="mt-4 px-4 py-2 bg-orange-600 text-white rounded-xl text-xs font-bold shadow hover:bg-orange-700">
-              去掃描獲取
-            </button>
-          </div>
-        `;
-      } else {
-        const grouped = {};
-        state.backpack.forEach(item => {
-          if (!grouped[item.deptId]) {
-            grouped[item.deptId] = { deptName: item.deptName, keywords: [] };
-          }
-          grouped[item.deptId].keywords.push(item.keyword);
-        });
-
-        fullList.innerHTML = Object.entries(grouped).map(([deptId, data]) => `
-          <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
-            <div class="flex items-center justify-between border-b pb-2 mb-2.5">
-              <span class="font-black text-xs text-slate-800 flex items-center gap-1.5">
-                <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
-                ${data.deptName}
-              </span>
-              <span class="text-[10px] text-orange-600 font-bold bg-orange-50 px-2 py-0.5 rounded-full border border-orange-200">
-                已解鎖全部 3 個詞
-              </span>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              ${data.keywords.map(kw => `
-                <div class="bg-orange-50 text-orange-950 border border-orange-200/80 rounded-xl px-3 py-2 flex items-center justify-between text-xs font-bold shadow-2xs">
-                  <span>${kw}</span>
-                  <i data-lucide="check" class="w-3.5 h-3.5 text-orange-500"></i>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-        `).join('');
-        if (window.lucide) lucide.createIcons();
-      }
+    function closeCollectSuccessModal() {
+      const modal = document.getElementById("collectSuccessModal");
+      if (modal) modal.classList.add("hidden");
     }
 
     function openResetConfirmModal() {
-      if (state.backpack.length === 0) {
-        showToast("背包目前本來就是空的喔！");
-        return;
-      }
       const modal = document.getElementById("resetConfirmModal");
-      modal.classList.remove("hidden");
-      if (window.lucide) lucide.createIcons();
+      if (modal) modal.classList.remove("hidden");
     }
 
     function closeResetConfirmModal() {
-      document.getElementById("resetConfirmModal").classList.add("hidden");
+      const modal = document.getElementById("resetConfirmModal");
+      if (modal) modal.classList.add("hidden");
     }
 
     function confirmResetBackpack() {
@@ -1062,688 +966,631 @@
     }
 
     /* =====================================================================
-       7. 造句工坊邏輯
+       5. 工作人員密碼核銷與單機限領一次機制
+       ===================================================================== */
+    function renderRedeemUI() {
+      const pendingBox = document.getElementById("redeemPendingBox");
+      const completedBox = document.getElementById("redeemCompletedBox");
+      const timestampText = document.getElementById("redeemTimestampText");
+
+      if (!pendingBox || !completedBox) return;
+
+      if (state.redeemInfo && state.redeemInfo.redeemed) {
+        pendingBox.classList.add("hidden");
+        completedBox.classList.remove("hidden");
+        if (timestampText) {
+          timestampText.innerText = `核銷時間：${state.redeemInfo.time}`;
+        }
+      } else {
+        pendingBox.classList.remove("hidden");
+        completedBox.classList.add("hidden");
+      }
+    }
+
+    function openStaffRedeemModal() {
+      if (state.redeemInfo && state.redeemInfo.redeemed) {
+        showToast("⚠️ 此手機已經兌換過禮物囉！");
+        return;
+      }
+      const input = document.getElementById("staffPinInput");
+      if (input) input.value = "";
+      document.getElementById("staffRedeemModal").classList.remove("hidden");
+      if (input) setTimeout(() => input.focus(), 100);
+    }
+
+    function closeStaffRedeemModal() {
+      document.getElementById("staffRedeemModal").classList.add("hidden");
+    }
+
+    function verifyAndRedeemGift() {
+      const input = document.getElementById("staffPinInput");
+      const enteredPin = input ? input.value.trim() : "";
+
+      if (enteredPin !== STAFF_REDEEM_PIN) {
+        showToast("❌ 核銷密碼錯誤，請重新確認！");
+        if (input) {
+          input.value = "";
+          input.focus();
+        }
+        return;
+      }
+
+      const now = new Date();
+      const timeStr = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+      state.redeemInfo = {
+        redeemed: true,
+        time: timeStr
+      };
+      saveRedeemStateToStorage();
+      closeStaffRedeemModal();
+      renderRedeemUI();
+      triggerConfetti();
+      showToast("🎉 核銷成功！此手機已記錄為已兌換");
+    }
+
+    /* =====================================================================
+       6. 造句工坊邏輯 (包含 A、B、C 三個帳篷區域跨區檢查)
        ===================================================================== */
     function populateTemplateDropdown() {
       const select = document.getElementById("templateSelect");
-      select.innerHTML = SENTENCE_TEMPLATES.map((tmpl, idx) => `
-        <option value="${idx}">${tmpl.text}</option>
-      `).join('');
+      if (!select) return;
+      select.innerHTML = SENTENCE_TEMPLATES.map((tpl, idx) =>
+        `<option value="${idx}">句型 ${idx + 1}：${tpl.preview}</option>`
+      ).join("");
     }
 
     function handleTemplateChange() {
       const select = document.getElementById("templateSelect");
-      state.selectedTemplateIndex = parseInt(select.value, 10);
-      updateSentencePreview();
-    }
-
-    function pickKeywordForCraft(deptId, deptName, keyword) {
-      const alreadyPickedIndex = state.selectedSlots.findIndex(s => s && s.deptId === deptId && s.keyword === keyword);
-      if (alreadyPickedIndex !== -1) {
-        removeSlot(alreadyPickedIndex);
-        return;
-      }
-
-      const sameDeptIndex = state.selectedSlots.findIndex(s => s && s.deptId === deptId);
-      if (sameDeptIndex !== -1) {
-        showToast(`⚠️ 規則提醒：每系只能選一個！已選過【${deptName}】的「${state.selectedSlots[sameDeptIndex].keyword}」`);
-        return;
-      }
-
-      const emptySlotIndex = state.selectedSlots.findIndex(s => s === null);
-      if (emptySlotIndex === -1) {
-        showToast("3 個槽位已滿！請先點擊 X 移除某個關鍵字，或點「清空重選」。");
-        return;
-      }
-
-      state.selectedSlots[emptySlotIndex] = { deptId, deptName, keyword };
+      if (!select) return;
+      state.selectedTemplateIndex = parseInt(select.value, 10) || 0;
       renderCraftUI();
     }
 
-    function removeSlot(index) {
-      state.selectedSlots[index] = null;
+    function toggleKeywordSelection(deptId, deptName, zone, keyword) {
+      const existingSlotIdx = state.selectedSlots.findIndex(
+        s => s && s.deptId === deptId && s.keyword === keyword
+      );
+      if (existingSlotIdx !== -1) {
+        state.selectedSlots[existingSlotIdx] = null;
+        renderCraftUI();
+        return;
+      }
+
+      const sameDeptSlotIdx = state.selectedSlots.findIndex(
+        s => s && s.deptId === deptId
+      );
+      if (sameDeptSlotIdx !== -1) {
+        state.selectedSlots[sameDeptSlotIdx] = { deptId, deptName, zone, keyword };
+        renderCraftUI();
+        showToast(`已將【${deptName}】的關鍵字替換為「${keyword}」`);
+        return;
+      }
+
+      const sameZoneSlotIdx = state.selectedSlots.findIndex(
+        s => s && s.zone === zone
+      );
+      if (sameZoneSlotIdx !== -1) {
+        const oldSlot = state.selectedSlots[sameZoneSlotIdx];
+        const zoneLabel = TENT_ZONES[zone]?.name || `${zone} 區`;
+        state.selectedSlots[sameZoneSlotIdx] = { deptId, deptName, zone, keyword };
+        renderCraftUI();
+        showToast(`🔄 規則需包含三個不同區域，已將 ${zoneLabel} 替換為【${deptName}】`);
+        return;
+      }
+
+      const emptyIdx = state.selectedSlots.findIndex(s => s === null);
+      if (emptyIdx === -1) {
+        showToast("⚠️ 3 個格子都滿囉！請先點擊上方槽位取消其中一個再選");
+        return;
+      }
+
+      state.selectedSlots[emptyIdx] = { deptId, deptName, zone, keyword };
+      renderCraftUI();
+    }
+
+    function removeSlot(slotIndex) {
+      state.selectedSlots[slotIndex] = null;
       renderCraftUI();
     }
 
     function resetSelectedSlots() {
       state.selectedSlots = [null, null, null];
       renderCraftUI();
-      showToast("已清空已選槽位");
-    }
-
-    function randomizeSentence() {
-      const byDept = {};
-      state.backpack.forEach(item => {
-        if (!byDept[item.deptId]) byDept[item.deptId] = [];
-        byDept[item.deptId].push(item);
-      });
-
-      const deptKeys = Object.keys(byDept);
-      if (deptKeys.length < 3) {
-        showToast("⚠️ 需要收集至少 3 個不同科系才能進行隨機造句！");
-        return;
-      }
-
-      const shuffledDepts = [...deptKeys].sort(() => 0.5 - Math.random()).slice(0, 3);
-      state.selectedSlots = shuffledDepts.map(dId => {
-        const items = byDept[dId];
-        return items[Math.floor(Math.random() * items.length)];
-      });
-
-      state.selectedTemplateIndex = Math.floor(Math.random() * SENTENCE_TEMPLATES.length);
-      document.getElementById("templateSelect").value = state.selectedTemplateIndex;
-
-      renderCraftUI();
-      showToast("✨ 已為你隨機拼出全新靈感！");
-    }
-
-    function renderCraftUI() {
-      for (let i = 0; i < 3; i++) {
-        const item = state.selectedSlots[i];
-        const textEl = document.getElementById(`slot${i + 1}-text`);
-        const removeBtn = document.getElementById(`slot${i + 1}-remove`);
-
-        if (item) {
-          textEl.innerHTML = `<span class="text-slate-900">${item.keyword}</span> <span class="text-[10px] text-slate-500 font-normal">(${item.deptName})</span>`;
-          removeBtn.classList.remove("hidden");
-        } else {
-          textEl.innerText = "請從下方點選";
-          textEl.className = "text-xs font-semibold text-slate-400";
-          removeBtn.classList.add("hidden");
-        }
-      }
-
-      const grid = document.getElementById("craftKeywordGrid");
-      if (state.backpack.length === 0) {
-        grid.innerHTML = `<span class="text-xs text-slate-400 py-3">背包目前沒有任何科系關鍵字，請先到各系攤位收集！</span>`;
-      } else {
-        const grouped = {};
-        state.backpack.forEach(item => {
-          if (!grouped[item.deptId]) {
-            grouped[item.deptId] = { deptName: item.deptName, items: [] };
-          }
-          grouped[item.deptId].items.push(item);
-        });
-
-        grid.innerHTML = Object.entries(grouped).map(([deptId, data]) => {
-          const chosenSlotIndex = state.selectedSlots.findIndex(s => s && s.deptId === deptId);
-          const hasChosenThisDept = chosenSlotIndex !== -1;
-          const chosenKeyword = hasChosenThisDept ? state.selectedSlots[chosenSlotIndex].keyword : null;
-
-          return `
-            <div class="p-2.5 rounded-xl border ${hasChosenThisDept ? 'bg-orange-50/50 border-orange-200' : 'bg-slate-50 border-slate-200'}">
-              <div class="flex items-center justify-between mb-1.5">
-                <span class="font-bold text-xs ${hasChosenThisDept ? 'text-orange-900' : 'text-slate-800'} flex items-center gap-1.5">
-                  <span class="w-2 h-2 rounded-full ${hasChosenThisDept ? 'bg-orange-500' : 'bg-slate-400'}"></span>
-                  ${data.deptName}
-                </span>
-                ${hasChosenThisDept 
-                  ? `<span class="text-[10px] text-orange-600 font-bold bg-white px-2 py-0.5 rounded-full border border-orange-200">已選入「${chosenKeyword}」</span>`
-                  : `<span class="text-[10px] text-slate-400">可選 1 個</span>`
-                }
-              </div>
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
-                ${data.items.map(item => {
-                  const isThisWordSelected = state.selectedSlots.some(s => s && s.deptId === item.deptId && s.keyword === item.keyword);
-                  const isBlockedBySameDept = hasChosenThisDept && !isThisWordSelected;
-
-                  let btnStyle = "bg-white border-slate-200 text-slate-800 hover:border-orange-400 hover:text-orange-600";
-                  if (isThisWordSelected) {
-                    btnStyle = "bg-orange-500 border-orange-500 text-white shadow-xs font-black";
-                  } else if (isBlockedBySameDept) {
-                    btnStyle = "bg-slate-100/70 border-slate-200 text-slate-400 opacity-60 cursor-not-allowed";
-                  }
-
-                  return `
-                    <button 
-                      type="button"
-                      onclick="pickKeywordForCraft('${item.deptId}', '${item.deptName}', '${item.keyword}')" 
-                      class="px-2.5 py-1.5 rounded-lg border text-xs font-bold text-left flex items-center justify-between transition active:scale-95 ${btnStyle}">
-                      <span class="truncate">${item.keyword}</span>
-                      ${isThisWordSelected ? '<span class="text-[10px] ml-1">✓</span>' : ''}
-                    </button>
-                  `;
-                }).join('')}
-              </div>
-            </div>
-          `;
-        }).join('');
-      }
-
-      updateSentencePreview();
-
-      const isComplete = state.selectedSlots.every(s => s !== null);
-      const nextBtn = document.getElementById("nextToCardBtn");
-      nextBtn.disabled = !isComplete;
-    }
-
-    function updateSentencePreview() {
-      const liveBox = document.getElementById("liveSentenceBox");
-      const tmpl = SENTENCE_TEMPLATES[state.selectedTemplateIndex];
-
-      const s0 = state.selectedSlots[0] ? `<span class="px-2 py-0.5 mx-1 rounded-md bg-orange-500 text-white font-black shadow-xs">${state.selectedSlots[0].keyword}</span>` : `<span class="px-2 py-0.5 mx-1 rounded-md bg-slate-700 text-orange-300 border border-dashed border-orange-400">＿＿</span>`;
-      const s1 = state.selectedSlots[1] ? `<span class="px-2 py-0.5 mx-1 rounded-md bg-cyan-500 text-white font-black shadow-xs">${state.selectedSlots[1].keyword}</span>` : `<span class="px-2 py-0.5 mx-1 rounded-md bg-slate-700 text-cyan-300 border border-dashed border-cyan-400">＿＿</span>`;
-      const s2 = state.selectedSlots[2] ? `<span class="px-2 py-0.5 mx-1 rounded-md bg-purple-500 text-white font-black shadow-xs">${state.selectedSlots[2].keyword}</span>` : `<span class="px-2 py-0.5 mx-1 rounded-md bg-slate-700 text-purple-300 border border-dashed border-purple-400">＿＿</span>`;
-
-      liveBox.innerHTML = `
-        <p class="leading-loose">
-          ${tmpl.parts[0]}${s0}${tmpl.parts[1]}${s1}${tmpl.parts[2]}${s2}${tmpl.parts[3]}
-        </p>
-      `;
-    }
-
-    function goToCardCustomization() {
-      if (!state.selectedSlots.every(s => s !== null)) {
-        showToast("請填滿 3 個空格才能前往合成紀念卡！");
-        return;
-      }
-      switchTab("tab-card");
-      updateCardCanvas();
+      showToast("已清空選取的關鍵字");
     }
 
     /* =====================================================================
-       8. 紀念卡繪製與合成 (HTML5 Canvas Engine)
+       7. UI 渲染與分頁切換
        ===================================================================== */
+    function switchTab(tabName) {
+      if (tabName !== "collect" && state.isScannerActive) {
+        stopCameraScanner();
+      }
+      ["collect", "backpack", "craft", "card"].forEach(name => {
+        const sec = document.getElementById(`section-${name}`);
+        const btn = document.getElementById(`tab-btn-${name}`);
+        if (sec) sec.classList.toggle("hidden", name !== tabName);
+        if (btn) {
+          if (name === tabName) {
+            btn.classList.add("text-orange-600", "bg-orange-50");
+            btn.classList.remove("text-slate-500");
+          } else {
+            btn.classList.remove("text-orange-600", "bg-orange-50");
+            btn.classList.add("text-slate-500");
+          }
+        }
+      });
+
+      if (tabName === "card") {
+        renderPresetThemeButtons();
+        updateCardCanvas();
+      }
+    }
+
+    function renderBackpackUI() {
+      const grouped = {};
+      state.backpack.forEach(item => {
+        if (!grouped[item.deptId]) {
+          const deptMeta = DEPARTMENT_DATA.find(d => d.id === item.deptId);
+          grouped[item.deptId] = {
+            deptName: item.deptName,
+            zone: item.zone || (deptMeta ? deptMeta.zone : "A"),
+            keywords: []
+          };
+        }
+        grouped[item.deptId].keywords.push(item.keyword);
+      });
+
+      const deptKeys = Object.keys(grouped);
+      const countEl = document.getElementById("collectedDeptCount");
+      if (countEl) countEl.innerText = `${deptKeys.length} / ${DEPARTMENT_DATA.length}`;
+
+      const listContainer = document.getElementById("backpackListContainer");
+      const previewContainer = document.getElementById("collectPreviewContainer");
+
+      if (deptKeys.length === 0) {
+        const emptyHtml = `<div class="text-center py-8 text-slate-400 text-xs bg-white rounded-2xl border border-dashed border-slate-200">背包還是空的喔！快去 A、B、C 三區帳篷掃描 QR Code 吧 🚲</div>`;
+        if (listContainer) listContainer.innerHTML = emptyHtml;
+        if (previewContainer) previewContainer.innerHTML = emptyHtml;
+        return;
+      }
+
+      const cardsHtml = deptKeys.map(dId => {
+        const group = grouped[dId];
+        const zInfo = TENT_ZONES[group.zone] || TENT_ZONES.A;
+        return `
+          <div class="bg-white border border-slate-200 rounded-2xl p-3.5 shadow-sm">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <span class="font-black text-sm text-slate-800">${group.deptName}</span>
+                <span class="text-[10px] font-black px-2 py-0.5 rounded-md ${zInfo.badgeBg} ${zInfo.badgeText}">${zInfo.name}</span>
+              </div>
+              <span class="text-[10px] font-bold text-slate-400">已收齊 3 詞</span>
+            </div>
+            <div class="flex flex-wrap gap-1.5">
+              ${group.keywords.map(kw => `<span class="px-2.5 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded-lg">${kw}</span>`).join("")}
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      if (listContainer) listContainer.innerHTML = cardsHtml;
+      if (previewContainer) previewContainer.innerHTML = cardsHtml;
+    }
+
+    function renderCraftUI() {
+      const grouped = {};
+      state.backpack.forEach(item => {
+        if (!grouped[item.deptId]) {
+          const deptMeta = DEPARTMENT_DATA.find(d => d.id === item.deptId);
+          grouped[item.deptId] = {
+            deptId: item.deptId,
+            deptName: item.deptName,
+            zone: item.zone || (deptMeta ? deptMeta.zone : "A"),
+            keywords: []
+          };
+        }
+        grouped[item.deptId].keywords.push(item.keyword);
+      });
+      const deptGroups = Object.values(grouped);
+
+      const zoneBadgeContainer = document.getElementById("zoneProgressBadges");
+      if (zoneBadgeContainer) {
+        zoneBadgeContainer.innerHTML = ["A", "B", "C"].map(zKey => {
+          const zInfo = TENT_ZONES[zKey];
+          const hasInBackpack = deptGroups.some(g => g.zone === zKey);
+          const isSelectedInSlot = state.selectedSlots.some(s => s && s.zone === zKey);
+
+          let styleClass = "bg-slate-100 text-slate-400 border-slate-200";
+          let statusIcon = "未收集";
+          if (isSelectedInSlot) {
+            styleClass = "bg-emerald-500 text-white border-emerald-600 shadow-xs";
+            statusIcon = "✓ 已選入";
+          } else if (hasInBackpack) {
+            styleClass = `${zInfo.badgeBg} ${zInfo.badgeText} border-current`;
+            statusIcon = "可挑選";
+          }
+          return `<span class="text-[10px] font-black px-2 py-0.5 rounded-lg border ${styleClass}">${zInfo.name} (${statusIcon})</span>`;
+        }).join("");
+      }
+
+      const slotPreviewEl = document.getElementById("sentencePreviewBox");
+      const tpl = SENTENCE_TEMPLATES[state.selectedTemplateIndex] || SENTENCE_TEMPLATES[0];
+
+      if (slotPreviewEl && tpl) {
+        let html = tpl.parts[0];
+        for (let i = 0; i < 3; i++) {
+          const slot = state.selectedSlots[i];
+          const color = KEYWORD_COLORS[i];
+          if (slot) {
+            html += `<button onclick="removeSlot(${i})" class="inline-flex items-center gap-1 mx-1 px-2.5 py-0.5 rounded-lg font-black text-white shadow-sm text-sm" style="background:${color.bg}">
+              <span>${slot.keyword}</span><span class="text-[10px] opacity-80">✕</span>
+            </button>`;
+          } else {
+            html += `<span class="inline-block mx-1 px-3 py-0.5 rounded-lg border-2 border-dashed border-orange-300 bg-orange-50/60 text-orange-500 font-bold text-xs">空格 ${i + 1}</span>`;
+          }
+          html += tpl.parts[i + 1] || "";
+        }
+        slotPreviewEl.innerHTML = html;
+      }
+
+      const poolContainer = document.getElementById("craftKeywordPool");
+      if (!poolContainer) return;
+
+      const collectedZones = new Set(deptGroups.map(g => g.zone));
+      const missingZones = ["A", "B", "C"].filter(z => !collectedZones.has(z));
+
+      if (missingZones.length > 0) {
+        const missingLabels = missingZones.map(z => TENT_ZONES[z].name).join("、");
+        poolContainer.innerHTML = `
+          <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center space-y-2">
+            <p class="text-xs font-black text-amber-900">還差【${missingLabels}】的關鍵字喔！</p>
+            <p class="text-[11px] text-amber-700">句子必須包含 A 區、B 區、C 區三個不同帳篷區域的科系，快去收集吧！</p>
+            <button onclick="switchTab('collect')" class="px-4 py-2 bg-orange-500 text-white text-xs font-black rounded-xl shadow-sm">前往掃描收集</button>
+          </div>
+        `;
+        return;
+      }
+
+      poolContainer.innerHTML = deptGroups.map(group => {
+        const zInfo = TENT_ZONES[group.zone] || TENT_ZONES.A;
+        const selectedItem = state.selectedSlots.find(s => s && s.deptId === group.deptId);
+        const zoneOccupiedByOtherDept = state.selectedSlots.find(s => s && s.zone === group.zone && s.deptId !== group.deptId);
+
+        return `
+          <div class="bg-white border ${selectedItem ? 'border-orange-400 ring-2 ring-orange-100' : 'border-slate-200'} rounded-2xl p-3 transition">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-black text-slate-800">${group.deptName}</span>
+                <span class="text-[10px] font-black px-1.5 py-0.5 rounded ${zInfo.badgeBg} ${zInfo.badgeText}">${zInfo.name}</span>
+              </div>
+              ${selectedItem
+                ? `<span class="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full">已選入「${selectedItem.keyword}」</span>`
+                : zoneOccupiedByOtherDept
+                  ? `<span class="text-[10px] text-slate-400">${zInfo.name}已選【${zoneOccupiedByOtherDept.deptName}】</span>`
+                  : `<span class="text-[10px] text-slate-400">可任選 1 詞</span>`
+              }
+            </div>
+            <div class="flex flex-wrap gap-1.5">
+              ${group.keywords.map(kw => {
+                const isThisSelected = selectedItem && selectedItem.keyword === kw;
+                const isOtherInSameDeptSelected = selectedItem && selectedItem.keyword !== kw;
+                let btnClass = "bg-slate-100 hover:bg-orange-100 text-slate-700 border-transparent";
+                if (isThisSelected) {
+                  btnClass = "bg-orange-500 text-white border-orange-600 shadow-sm";
+                } else if (isOtherInSameDeptSelected || zoneOccupiedByOtherDept) {
+                  btnClass = "bg-slate-50 text-slate-400 border-slate-200 opacity-70";
+                }
+                return `<button onclick="toggleKeywordSelection('${group.deptId}', '${group.deptName}', '${group.zone}', '${kw}')" class="px-3 py-1.5 rounded-xl text-xs font-bold border transition active:scale-95 ${btnClass}">${kw}</button>`;
+              }).join("")}
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function generateCardFromCraft() {
+      if (state.selectedSlots.some(s => s === null)) {
+        showToast("⚠️ 請先選滿 A、B、C 三個區域的關鍵字喔！");
+        return;
+      }
+      const zones = new Set(state.selectedSlots.map(s => s.zone));
+      if (zones.size < 3) {
+        showToast("⚠️ 必須包含三個不同帳篷區域（A 區、B 區、C 區）！");
+        return;
+      }
+      switchTab("card");
+      triggerConfetti();
+    }
+
+    function restartSentenceMaking() {
+      switchTab("craft");
+    }
+
+    /* =====================================================================
+       8. 紀念卡官方主題底圖選擇器、Canvas 繪製與下載匯出
+       ===================================================================== */
+    function renderPresetThemeButtons() {
+      const container = document.getElementById("presetThemeSelector");
+      if (!container) return;
+
+      container.innerHTML = PRESET_CARD_THEMES.map(theme => {
+        const isSelected = !state.cardBackgroundImage && state.selectedPresetThemeId === theme.id;
+        return `
+          <button onclick="selectPresetCardTheme('${theme.id}')" class="flex flex-col items-center gap-1 p-1.5 rounded-xl border-2 transition ${isSelected ? 'border-orange-500 bg-orange-50/60 shadow-xs' : 'border-slate-100 hover:border-slate-200'}">
+            <div class="w-full h-9 rounded-lg bg-gradient-to-br ${theme.thumbBg} flex items-center justify-center text-white text-base shadow-inner">
+              ${theme.icon}
+            </div>
+            <span class="text-[10px] font-bold text-slate-700 leading-tight">${theme.name}</span>
+          </button>
+        `;
+      }).join("");
+    }
+
+    function selectPresetCardTheme(themeId) {
+      state.cardBackgroundImage = null;
+      state.selectedPresetThemeId = themeId;
+      renderPresetThemeButtons();
+      updateCardCanvas();
+      const theme = PRESET_CARD_THEMES.find(t => t.id === themeId);
+      if (theme) showToast(`🎨 已切換為官方底圖：${theme.name}`);
+    }
+
     function drawDefaultThemeDirectly(ctx, width, height) {
+      const theme = PRESET_CARD_THEMES.find(t => t.id === state.selectedPresetThemeId) || PRESET_CARD_THEMES[0];
       const grad = ctx.createLinearGradient(0, 0, width, height);
-      grad.addColorStop(0, "#ea580c");   // 頂部活力橘
-      grad.addColorStop(0.4, "#0f172a"); // 中段深色夜空黑
-      grad.addColorStop(1, "#1e1b4b");   // 底部深夜紫藍
+      grad.addColorStop(0, theme.colors[0]);
+      grad.addColorStop(0.5, theme.colors[1]);
+      grad.addColorStop(1, theme.colors[2]);
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, width, height);
 
-      // 裝飾同心圓線條
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
-      ctx.lineWidth = 4;
-      for (let i = 0; i < 8; i++) {
-        ctx.beginPath();
-        ctx.arc(width / 2, height / 2, 120 + i * 80, 0, Math.PI * 2);
-        ctx.stroke();
-      }
+      ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
+      ctx.beginPath();
+      ctx.arc(width * 0.85, height * 0.18, 260, 0, Math.PI * 2);
+      ctx.fill();
 
-      // 裝飾單車剪影符號
-      ctx.fillStyle = "rgba(255, 255, 255, 0.12)";
-      ctx.font = "180px 'Noto Sans TC', sans-serif";
+      ctx.beginPath();
+      ctx.arc(width * 0.15, height * 0.82, 320, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.font = "140px sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText("🚲", width / 2, 500);
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "rgba(255,255,255,0.22)";
+      ctx.fillText(theme.icon, width / 2, height * 0.45);
     }
 
     function createDefaultCardBackground() {
       state.cardBackgroundImage = null;
-      updateCardCanvas();
+      state.selectedPresetThemeId = "orange";
     }
 
     function handlePhotoUpload(event) {
       const file = event.target.files[0];
       if (!file) return;
-
       const reader = new FileReader();
       reader.onload = (e) => {
         const img = new Image();
         img.onload = () => {
           state.cardBackgroundImage = img;
+          renderPresetThemeButtons();
           updateCardCanvas();
-          showToast("📸 背景照片已更新！");
+          showToast("📸 照片背景已套用！");
         };
         img.src = e.target.result;
       };
       reader.readAsDataURL(file);
     }
 
-    function resetDefaultThemePhoto() {
-      createDefaultCardBackground();
-      showToast("已套用單車節限定主題底圖");
-    }
-
-    let currentCardBlobUrl = null;
-
-    // 重新繪製整個紀念卡畫布 (高解析度 1080 x 1350)
     function updateCardCanvas() {
       const canvas = document.getElementById("cardCanvas");
       if (!canvas) return;
       const ctx = canvas.getContext("2d");
-
       const width = 1080;
       const height = 1350;
       canvas.width = width;
       canvas.height = height;
 
-      // 讀取滑桿數值
-      const overlaySlider = document.getElementById("overlayOpacityRange");
-      const blurSlider = document.getElementById("blurRange");
-      const darkness = overlaySlider ? (parseInt(overlaySlider.value, 10) / 100) : 0.55;
-      const blur = blurSlider ? parseInt(blurSlider.value, 10) : 0;
+      const darknessSlider = document.getElementById("bgDarknessSlider");
+      const darkness = darknessSlider ? parseFloat(darknessSlider.value) : 0.35;
 
-      if (document.getElementById("darkOverlayVal")) {
-        document.getElementById("darkOverlayVal").innerText = Math.round(darkness * 100) + "%";
-      }
-      if (document.getElementById("blurVal")) {
-        document.getElementById("blurVal").innerText = blur + "px";
-      }
-
-      // 1. 繪製背景
       if (state.cardBackgroundImage) {
-        ctx.save();
-        if (blur > 0) {
-          ctx.filter = `blur(${blur * 2}px)`;
-        }
-        drawCoverImage(ctx, state.cardBackgroundImage, 0, 0, width, height);
-        ctx.restore();
+        const img = state.cardBackgroundImage;
+        const scale = Math.max(width / img.width, height / img.height);
+        const drawW = img.width * scale;
+        const drawH = img.height * scale;
+        const offsetX = (width - drawW) / 2;
+        const offsetY = (height - drawH) / 2;
+        ctx.drawImage(img, offsetX, offsetY, drawW, drawH);
       } else {
         drawDefaultThemeDirectly(ctx, width, height);
       }
 
-      // 2. 疊加遮罩與對比漸層
       ctx.fillStyle = `rgba(15, 23, 42, ${darkness})`;
       ctx.fillRect(0, 0, width, height);
 
-      const vGrad = ctx.createLinearGradient(0, 0, 0, height);
-      vGrad.addColorStop(0, "rgba(0,0,0,0.6)");
-      vGrad.addColorStop(0.3, "rgba(0,0,0,0.2)");
-      vGrad.addColorStop(0.7, "rgba(0,0,0,0.4)");
-      vGrad.addColorStop(1, "rgba(0,0,0,0.85)");
-      ctx.fillStyle = vGrad;
-      ctx.fillRect(0, 0, width, height);
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.35)";
+      ctx.lineWidth = 6;
+      ctx.strokeRect(48, 48, width - 96, height - 96);
 
-      // 3. 卡片外框裝飾
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
-      ctx.lineWidth = 14;
-      ctx.strokeRect(30, 30, width - 60, height - 60);
-
-      // 4. 卡片頂部 Header 文案
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-
-      drawRoundedRect(ctx, width / 2 - 190, 80, 380, 56, 28, "rgba(255,255,255,0.18)", "rgba(255,255,255,0.4)", 2);
-      ctx.fillStyle = "#ffedd5";
-      ctx.font = "bold 26px 'Noto Sans TC', sans-serif";
-      ctx.fillText("🚲 2026 成大單車節限定活動", width / 2, 108);
+      ctx.fillStyle = "#fdba74";
+      ctx.font = "900 34px 'Noto Sans TC', sans-serif";
+      ctx.fillText("NCKU BIKE FESTIVAL • 關鍵字造句", width / 2, 130);
 
       ctx.fillStyle = "#ffffff";
-      ctx.font = "900 68px 'Noto Sans TC', sans-serif";
-      ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
-      ctx.shadowBlur = 20;
+      ctx.font = "900 62px 'Noto Sans TC', sans-serif";
       ctx.fillText("我的單車節名場面", width / 2, 210);
-      ctx.shadowBlur = 0;
 
-      ctx.strokeStyle = "#f97316";
-      ctx.lineWidth = 6;
-      ctx.beginPath();
-      ctx.moveTo(width / 2 - 120, 260);
-      ctx.lineTo(width / 2 + 120, 260);
-      ctx.stroke();
+      const tpl = SENTENCE_TEMPLATES[state.selectedTemplateIndex] || SENTENCE_TEMPLATES[0];
+      const segments = [];
+      segments.push({ text: tpl.parts[0], isKw: false });
+      for (let i = 0; i < 3; i++) {
+        const slot = state.selectedSlots[i];
+        segments.push({
+          text: slot ? slot.keyword : "＿＿＿",
+          isKw: true,
+          color: KEYWORD_COLORS[i].bg
+        });
+        if (tpl.parts[i + 1]) {
+          segments.push({ text: tpl.parts[i + 1], isKw: false });
+        }
+      }
 
-      // 5. 核心文字排版
-      drawSentenceOnCard(ctx, width, height);
+      drawWrappedSentence(ctx, segments, width / 2, 560, 860, 86);
 
-      // 6. 底部 Footer 文案 (保證完全水平置中)
-      const footerY = height - 160;
-
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(60, footerY);
-      ctx.lineTo(width - 60, footerY);
-      ctx.stroke();
-
+      const deptNames = state.selectedSlots.map(s => s ? `${s.deptName}(${s.zone}區)` : "未選系").join(" × ");
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
 
-      ctx.fillStyle = "#fdba74";
-      ctx.font = "bold 34px 'Noto Sans TC', sans-serif";
-      ctx.fillText("🚲 單車節限定・我的專屬紀念卡", width / 2, footerY + 45);
+      ctx.fillStyle = "rgba(255, 255, 255, 0.92)";
+      ctx.font = "700 30px 'Noto Sans TC', sans-serif";
+      ctx.fillText(`系所足跡：${deptNames}`, width / 2, height - 190);
 
-      const kwSources = state.selectedSlots.filter(Boolean).map(s => s.deptName).join(" × ");
-      ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
-      ctx.font = "bold 24px 'Noto Sans TC', sans-serif";
-      ctx.fillText(`系所足跡：${kwSources || "成大科系"}`, width / 2, footerY + 90);
+      ctx.fillStyle = "#fed7aa";
+      ctx.font = "900 34px 'Noto Sans TC', sans-serif";
+      ctx.fillText("🚲 單車節限定・我的專屬紀念卡", width / 2, height - 125);
 
-      // 輸出為可長按儲存的 Blob Object URL
-      canvas.toBlob((blob) => {
-        if (!blob) return;
-        if (currentCardBlobUrl) {
-          URL.revokeObjectURL(currentCardBlobUrl);
-        }
-        currentCardBlobUrl = URL.createObjectURL(blob);
-        const displayImg = document.getElementById("cardDisplayImg");
-        if (displayImg) {
-          displayImg.src = currentCardBlobUrl;
-        }
-      }, "image/png");
+      const imgEl = document.getElementById("cardPreviewImg");
+      if (imgEl) {
+        canvas.toBlob((blob) => {
+          if (!blob) return;
+          if (window._lastCardBlobUrl) URL.revokeObjectURL(window._lastCardBlobUrl);
+          window._lastCardBlobUrl = URL.createObjectURL(blob);
+          imgEl.src = window._lastCardBlobUrl;
+        }, "image/png");
+      }
     }
 
-    function drawSentenceOnCard(ctx, canvasWidth, canvasHeight) {
-      const tmpl = SENTENCE_TEMPLATES[state.selectedTemplateIndex];
-      const slot0 = state.selectedSlots[0] ? state.selectedSlots[0].keyword : "關鍵字一";
-      const slot1 = state.selectedSlots[1] ? state.selectedSlots[1].keyword : "關鍵字二";
-      const slot2 = state.selectedSlots[2] ? state.selectedSlots[2].keyword : "關鍵字三";
+    function drawWrappedSentence(ctx, segments, centerX, startY, maxWidth, lineHeight) {
+      const tokens = [];
+      ctx.font = "900 46px 'Noto Sans TC', sans-serif";
 
-      const segments = [
-        { type: "text", content: tmpl.parts[0] },
-        { type: "keyword", content: slot0, color: KEYWORD_COLORS[0] },
-        { type: "text", content: tmpl.parts[1] },
-        { type: "keyword", content: slot1, color: KEYWORD_COLORS[1] },
-        { type: "text", content: tmpl.parts[2] },
-        { type: "keyword", content: slot2, color: KEYWORD_COLORS[2] },
-        { type: "text", content: tmpl.parts[3] }
-      ];
-
-      const maxLineWidth = 880;
-      const fontSize = 42;
-      ctx.font = `bold ${fontSize}px 'Noto Sans TC', sans-serif`;
+      segments.forEach(seg => {
+        if (seg.isKw) {
+          const w = ctx.measureText(seg.text).width + 36;
+          tokens.push({ text: seg.text, isKw: true, color: seg.color, width: w });
+        } else {
+          for (const ch of seg.text) {
+            tokens.push({ text: ch, isKw: false, width: ctx.measureText(ch).width });
+          }
+        }
+      });
 
       const lines = [];
       let currentLine = [];
-      let currentLineWidth = 0;
+      let currentWidth = 0;
 
-      segments.forEach(seg => {
-        if (seg.type === "text") {
-          const chars = seg.content.split("");
-          let wordBuf = "";
-          chars.forEach(ch => {
-            const w = ctx.measureText(ch).width;
-            if (currentLineWidth + w > maxLineWidth) {
-              if (wordBuf) {
-                currentLine.push({ type: "text", content: wordBuf, width: ctx.measureText(wordBuf).width });
-                wordBuf = "";
-              }
-              lines.push({ items: currentLine, width: currentLineWidth });
-              currentLine = [];
-              currentLineWidth = 0;
-            }
-            wordBuf += ch;
-            currentLineWidth += w;
-          });
-          if (wordBuf) {
-            currentLine.push({ type: "text", content: wordBuf, width: ctx.measureText(wordBuf).width });
-          }
+      tokens.forEach(tok => {
+        if (currentWidth + tok.width > maxWidth && currentLine.length > 0) {
+          lines.push({ items: currentLine, totalWidth: currentWidth });
+          currentLine = [tok];
+          currentWidth = tok.width;
         } else {
-          const kwWidth = ctx.measureText(seg.content).width + 36;
-          if (currentLineWidth + kwWidth > maxLineWidth && currentLineWidth > 0) {
-            lines.push({ items: currentLine, width: currentLineWidth });
-            currentLine = [];
-            currentLineWidth = 0;
-          }
-          currentLine.push({ type: "keyword", content: seg.content, color: seg.color, width: kwWidth });
-          currentLineWidth += kwWidth;
+          currentLine.push(tok);
+          currentWidth += tok.width;
         }
       });
       if (currentLine.length > 0) {
-        lines.push({ items: currentLine, width: currentLineWidth });
+        lines.push({ items: currentLine, totalWidth: currentWidth });
       }
 
-      const lineHeight = 88;
-      const totalBlockHeight = lines.length * lineHeight;
-      const startY = 400 + (650 - totalBlockHeight) / 2;
+      const totalHeight = lines.length * lineHeight;
+      let y = startY - totalHeight / 2 + lineHeight / 2;
 
-      const boxPadY = 40;
-      drawRoundedRect(
-        ctx,
-        70,
-        startY - boxPadY,
-        canvasWidth - 140,
-        totalBlockHeight + boxPadY * 2,
-        32,
-        "rgba(0, 0, 0, 0.45)",
-        "rgba(255, 255, 255, 0.2)",
-        2
-      );
+      lines.forEach(line => {
+        let x = centerX - line.totalWidth / 2;
+        line.items.forEach(tok => {
+          if (tok.isKw) {
+            const boxH = 66;
+            ctx.fillStyle = tok.color;
+            roundRect(ctx, x + 2, y - boxH / 2, tok.width - 4, boxH, 16);
+            ctx.fill();
 
-      lines.forEach((line, lineIdx) => {
-        const y = startY + lineIdx * lineHeight + lineHeight / 2;
-        let startX = (canvasWidth - line.width) / 2;
-
-        line.items.forEach(item => {
-          if (item.type === "text") {
             ctx.fillStyle = "#ffffff";
-            ctx.font = `bold ${fontSize}px 'Noto Sans TC', sans-serif`;
-            ctx.textAlign = "left";
-            ctx.textBaseline = "middle";
-            ctx.shadowColor = "rgba(0,0,0,0.7)";
-            ctx.shadowBlur = 10;
-            ctx.fillText(item.content, startX, y);
-            ctx.shadowBlur = 0;
-            startX += item.width;
-          } else {
-            const pillH = 58;
-            const pillY = y - pillH / 2;
-            drawRoundedRect(ctx, startX + 4, pillY, item.width - 8, pillH, pillH / 2, item.color.bg, "rgba(255,255,255,0.7)", 2.5);
-
-            ctx.fillStyle = item.color.text;
-            ctx.font = `900 ${fontSize - 2}px 'Noto Sans TC', sans-serif`;
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
-            ctx.fillText(item.content, startX + item.width / 2, y);
-
-            startX += item.width;
+            ctx.fillText(tok.text, x + tok.width / 2, y);
+          } else {
+            ctx.fillStyle = "#ffffff";
+            ctx.textAlign = "left";
+            ctx.textBaseline = "middle";
+            ctx.fillText(tok.text, x, y);
           }
+          x += tok.width;
         });
+        y += lineHeight;
       });
     }
 
-    function drawRoundedRect(ctx, x, y, width, height, radius, fillStyle, strokeStyle, strokeWidth) {
-      ctx.save();
+    function roundRect(ctx, x, y, w, h, r) {
       ctx.beginPath();
-      ctx.moveTo(x + radius, y);
-      ctx.lineTo(x + width - radius, y);
-      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-      ctx.lineTo(x + width, y + height - radius);
-      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-      ctx.lineTo(x + radius, y + height);
-      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-      ctx.lineTo(x, y + radius);
-      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
       ctx.closePath();
-
-      if (fillStyle) {
-        ctx.fillStyle = fillStyle;
-        ctx.fill();
-      }
-      if (strokeStyle && strokeWidth) {
-        ctx.strokeStyle = strokeStyle;
-        ctx.lineWidth = strokeWidth;
-        ctx.stroke();
-      }
-      ctx.restore();
     }
 
-    function drawCoverImage(ctx, img, x, y, w, h) {
-      const imgRatio = img.width / img.height;
-      const targetRatio = w / h;
-      let sX, sY, sW, sH;
-
-      if (imgRatio > targetRatio) {
-        sH = img.height;
-        sW = img.height * targetRatio;
-        sX = (img.width - sW) / 2;
-        sY = 0;
-      } else {
-        sW = img.width;
-        sH = img.width / targetRatio;
-        sX = 0;
-        sY = (img.height - sH) / 2;
-      }
-      ctx.drawImage(img, sX, sY, sW, sH, x, y, w, h);
-    }
-
-    function closeImageSaveModal() {
-      document.getElementById("imageSaveModal").classList.add("hidden");
-    }
-
-    function openCardInNewTab() {
-      if (!currentCardBlobUrl) {
-        showToast("紀念卡正在生成中，請稍候...");
-        return;
-      }
-      window.open(currentCardBlobUrl, "_blank");
-    }
-
-    async function downloadCardImage() {
+    function downloadCardImage() {
       const canvas = document.getElementById("cardCanvas");
       if (!canvas) return;
-
-      const timestamp = new Date().toISOString().slice(0, 10);
-      const fileName = `單車節名場面_${timestamp}.png`;
-
       canvas.toBlob(async (blob) => {
         if (!blob) {
           showToast("圖片生成中，請稍候再試");
           return;
         }
-
-        if (navigator.share) {
+        const file = new File([blob], "ncku-bike-card.png", { type: "image/png" });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
           try {
-            const file = new File([blob], fileName, { type: "image/png" });
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-              await navigator.share({
-                files: [file],
-                title: "我的單車節名場面",
-                text: "我在成大單車節製作的專屬紀念卡！"
-              });
-              showToast("🎉 已儲存成功！");
-              triggerConfetti();
-              return;
-            }
-          } catch (err) {
-            if (err.name === "AbortError") return;
-          }
+            await navigator.share({ files: [file], title: "我的單車節名場面" });
+            return;
+          } catch (e) {}
         }
-
-        try {
-          const downloadUrl = URL.createObjectURL(blob);
-          const link = document.createElement("a");
-          link.href = downloadUrl;
-          link.download = fileName;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          setTimeout(() => URL.revokeObjectURL(downloadUrl), 3000);
-        } catch (e) {
-          console.log("下載攔截", e);
-        }
-
-        const modal = document.getElementById("imageSaveModal");
-        const modalImg = document.getElementById("modalPreviewImg");
-        if (modal && modalImg) {
-          modalImg.src = currentCardBlobUrl;
-          modal.classList.remove("hidden");
-          if (window.lucide) lucide.createIcons();
-        }
-
-        showToast("📸 請長按圖片即可儲存到手機相簿！");
-        triggerConfetti();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "ncku-bike-card.png";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        showToast("💡 若手機未自動下載，請直接長按上方卡片圖片儲存！");
       }, "image/png");
     }
 
-    function triggerConfetti() {
-      try {
-        confetti({
-          particleCount: 50,
-          spread: 70,
-          origin: { y: 0.8 }
-        });
-      } catch (e) {}
+    function openCardInNewTab() {
+      if (window._lastCardBlobUrl) {
+        window.open(window._lastCardBlobUrl, "_blank");
+      } else {
+        showToast("請稍候，圖片準備中...");
+      }
     }
 
     function shareOrCopyCard() {
-      const tmpl = SENTENCE_TEMPLATES[state.selectedTemplateIndex];
-      const s0 = state.selectedSlots[0]?.keyword || "";
-      const s1 = state.selectedSlots[1]?.keyword || "";
-      const s2 = state.selectedSlots[2]?.keyword || "";
-      const sentenceText = `${tmpl.parts[0]}【${s0}】${tmpl.parts[1]}【${s1}】${tmpl.parts[2]}【${s2}】${tmpl.parts[3]}`;
-      const copyText = `🚲 我的成大單車節名場面：\n「${sentenceText}」\n快來單車節收集關鍵字，拼出你的名場面！`;
-
+      const tpl = SENTENCE_TEMPLATES[state.selectedTemplateIndex] || SENTENCE_TEMPLATES[0];
+      const text = `${tpl.parts[0]}${state.selectedSlots[0]?.keyword || ""}${tpl.parts[1]}${state.selectedSlots[1]?.keyword || ""}${tpl.parts[2]}${state.selectedSlots[2]?.keyword || ""}${tpl.parts[3] || ""} —— 我的成大單車節名場面 🚲`;
       const tempInput = document.createElement("textarea");
-      tempInput.value = copyText;
+      tempInput.value = text;
       document.body.appendChild(tempInput);
       tempInput.select();
-      try {
-        document.execCommand("copy");
-        showToast("已複製句子文字！可直接貼給朋友看～");
-      } catch (err) {
-        showToast("文字複製失敗");
-      }
+      document.execCommand("copy");
       document.body.removeChild(tempInput);
-    }
-
-    function restartSentenceMaking() {
-      state.selectedSlots = [null, null, null];
-      switchTab("tab-craft");
-      renderCraftUI();
-      showToast("已清空槽位，挑選新句子重新組合吧！");
+      showToast("📋 已複製你的名場面句子到剪貼簿！");
     }
 
     /* =====================================================================
-       9. 頁籤切換與視窗控制 (Tabs, Modals, Toasts)
-       ===================================================================== */
-    function switchTab(targetTabId) {
-      if (state.isScannerActive && targetTabId !== "tab-scan") {
-        stopCameraScanner();
-      }
-
-      document.querySelectorAll(".tab-page").forEach(page => {
-        page.classList.add("hidden");
-      });
-
-      const activePage = document.getElementById(targetTabId);
-      if (activePage) {
-        activePage.classList.remove("hidden");
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      }
-
-      document.querySelectorAll(".nav-item").forEach(item => {
-        item.classList.remove("text-orange-600");
-        item.classList.add("text-slate-400");
-      });
-      const activeNav = document.getElementById(`nav-${targetTabId}`);
-      if (activeNav) {
-        activeNav.classList.remove("text-slate-400");
-        activeNav.classList.add("text-orange-600");
-      }
-
-      if (targetTabId === "tab-card") {
-        updateCardCanvas();
-      }
-    }
-
-    function renderAllTabs() {
-      renderBackpackUI();
-      renderCraftUI();
-    }
-
-    function openRulesModal() {
-      document.getElementById("rulesModal").classList.remove("hidden");
-    }
-    function closeRulesModal() {
-      document.getElementById("rulesModal").classList.add("hidden");
-    }
-
-    let toastTimeout;
-    function showToast(message) {
-      const toast = document.getElementById("toast");
-      const msg = document.getElementById("toastMsg");
-      msg.innerText = message;
-
-      toast.classList.remove("opacity-0", "-translate-y-4");
-      toast.classList.add("opacity-100", "translate-y-0");
-
-      clearTimeout(toastTimeout);
-      toastTimeout = setTimeout(() => {
-        toast.classList.remove("opacity-100", "translate-y-0");
-        toast.classList.add("opacity-0", "-translate-y-4");
-      }, 2800);
-    }
-
-    /* =====================================================================
-       10. 頁面初始化
+       9. 模擬器、47系 QR Code 產生器、規則說明與慶祝特效
        ===================================================================== */
     function initDevModeControl() {
       const urlParams = new URLSearchParams(window.location.search);
-      const enableDev = IS_DEV_MODE || urlParams.get("dev") === "1" || urlParams.get("test") === "true";
+      const isForcedDev = urlParams.get("dev") === "1" || urlParams.get("admin") === "true";
       const devBtn = document.getElementById("devSimulatorBtn");
-      
       if (devBtn) {
-        if (enableDev) {
+        if (IS_DEV_MODE || isForcedDev) {
           devBtn.classList.remove("hidden");
         } else {
           devBtn.classList.add("hidden");
@@ -1751,12 +1598,184 @@
       }
     }
 
-    window.addEventListener("DOMContentLoaded", () => {
+    function populateDevSimulator() {
+      const container = document.getElementById("devDeptButtonsContainer");
+      if (container) {
+        container.innerHTML = DEPARTMENT_DATA.map(dept => {
+          const zInfo = TENT_ZONES[dept.zone] || TENT_ZONES.A;
+          return `
+            <button onclick="collectDepartmentKeywords('${dept.id}')" class="px-2.5 py-2 bg-slate-100 hover:bg-orange-100 text-slate-800 text-xs font-bold rounded-xl text-left transition flex items-center justify-between gap-1">
+              <span class="truncate">${dept.name}</span>
+              <span class="text-[9px] font-black px-1.5 py-0.5 rounded shrink-0 ${zInfo.badgeBg} ${zInfo.badgeText}">${zInfo.name}</span>
+            </button>
+          `;
+        }).join("");
+      }
+
+      // 填充 QR 產生器科系選單與預設網址
+      const baseUrlInput = document.getElementById("qrBaseUrlInput");
+      if (baseUrlInput) {
+        baseUrlInput.value = window.location.origin + window.location.pathname;
+      }
+
+      const qrSelect = document.getElementById("qrDeptSelect");
+      if (qrSelect) {
+        qrSelect.innerHTML = DEPARTMENT_DATA.map(dept =>
+          `<option value="${dept.id}">${dept.name}（${dept.zone} 區） - ?dept=${dept.id}</option>`
+        ).join("");
+      }
+    }
+
+    function switchDevSubTab(tab) {
+      const simBtn = document.getElementById("devSubTabSim");
+      const qrBtn = document.getElementById("devSubTabQr");
+      const simContainer = document.getElementById("devDeptButtonsContainer");
+      const qrPanel = document.getElementById("devQrGeneratorPanel");
+
+      if (tab === "sim") {
+        simBtn.classList.add("bg-white", "text-slate-900", "shadow-sm");
+        simBtn.classList.remove("text-slate-500");
+        qrBtn.classList.remove("bg-white", "text-slate-900", "shadow-sm");
+        qrBtn.classList.add("text-slate-500");
+        simContainer.classList.remove("hidden");
+        qrPanel.classList.add("hidden");
+      } else {
+        qrBtn.classList.add("bg-white", "text-slate-900", "shadow-sm");
+        qrBtn.classList.remove("text-slate-500");
+        simBtn.classList.remove("bg-white", "text-slate-900", "shadow-sm");
+        simBtn.classList.add("text-slate-500");
+        simContainer.classList.add("hidden");
+        qrPanel.classList.remove("hidden");
+        updateSelectedDeptQrPreview();
+      }
+    }
+
+    function updateSelectedDeptQrPreview() {
+      const baseUrlInput = document.getElementById("qrBaseUrlInput");
+      const qrSelect = document.getElementById("qrDeptSelect");
+      const targetDiv = document.getElementById("qrcodeRenderTarget");
+      const titleEl = document.getElementById("qrTargetTitle");
+      const urlTextEl = document.getElementById("qrTargetUrlText");
+
+      if (!qrSelect || !targetDiv) return;
+
+      const deptId = qrSelect.value;
+      const dept = DEPARTMENT_DATA.find(d => d.id === deptId) || DEPARTMENT_DATA[0];
+      const baseUrl = (baseUrlInput ? baseUrlInput.value.trim() : "").replace(/\/$/, "");
+      const fullUrl = `${baseUrl}?dept=${dept.id}`;
+
+      if (titleEl) titleEl.innerText = `${dept.name}（${dept.zone} 區）`;
+      if (urlTextEl) urlTextEl.innerText = fullUrl;
+
+      targetDiv.innerHTML = "";
+      if (typeof QRCode !== "undefined") {
+        new QRCode(targetDiv, {
+          text: fullUrl,
+          width: 190,
+          height: 190,
+          colorDark: "#0f172a",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.H
+        });
+      }
+    }
+
+    function downloadGeneratedDeptQr() {
+      const qrSelect = document.getElementById("qrDeptSelect");
+      const targetDiv = document.getElementById("qrcodeRenderTarget");
+      if (!qrSelect || !targetDiv) return;
+
+      const dept = DEPARTMENT_DATA.find(d => d.id === qrSelect.value) || DEPARTMENT_DATA[0];
+      const sourceCanvas = targetDiv.querySelector("canvas");
+      const sourceImg = targetDiv.querySelector("img");
+
+      // 繪製一張包含科系標題與高畫質 QR Code 的列印用 PNG 圖卡
+      const exportCanvas = document.createElement("canvas");
+      exportCanvas.width = 600;
+      exportCanvas.height = 720;
+      const ctx = exportCanvas.getContext("2d");
+
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, 600, 720);
+
+      ctx.strokeStyle = "#f97316";
+      ctx.lineWidth = 12;
+      ctx.strokeRect(16, 16, 568, 688);
+
+      ctx.fillStyle = "#ea580c";
+      ctx.font = "900 28px 'Noto Sans TC', sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("🚲 成大單車節・關鍵字造句", 300, 75);
+
+      ctx.fillStyle = "#0f172a";
+      ctx.font = "900 46px 'Noto Sans TC', sans-serif";
+      ctx.fillText(`${dept.name}（${dept.zone}區）`, 300, 140);
+
+      const drawQrAndSave = (imgSource) => {
+        ctx.drawImage(imgSource, 110, 185, 380, 380);
+        ctx.fillStyle = "#64748b";
+        ctx.font = "700 24px 'Noto Sans TC', sans-serif";
+        ctx.fillText("掃描收集本系 3 個專屬關鍵字！", 300, 625);
+
+        exportCanvas.toBlob((blob) => {
+          if (!blob) return;
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `QR_${dept.zone}區_${dept.name}_${dept.id}.png`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          showToast(`✅ 已下載【${dept.name}】專屬 QR 圖卡！`);
+        }, "image/png");
+      };
+
+      if (sourceCanvas) {
+        drawQrAndSave(sourceCanvas);
+      } else if (sourceImg) {
+        drawQrAndSave(sourceImg);
+      }
+    }
+
+    function openDevSimulatorModal() {
+      const modal = document.getElementById("devSimulatorModal");
+      if (modal) modal.classList.remove("hidden");
+    }
+
+    function closeDevSimulatorModal() {
+      const modal = document.getElementById("devSimulatorModal");
+      if (modal) modal.classList.add("hidden");
+    }
+
+    function renderAllTabs() {
+      renderBackpackUI();
+      renderCraftUI();
+      renderRedeemUI();
+    }
+
+    function openRulesModal() {
+      const modal = document.getElementById("rulesModal");
+      if (modal) modal.classList.remove("hidden");
+    }
+
+    function closeRulesModal() {
+      const modal = document.getElementById("rulesModal");
+      if (modal) modal.classList.add("hidden");
+    }
+
+    function triggerConfetti() {
+      if (typeof confetti === "function") {
+        confetti({ particleCount: 65, spread: 60, origin: { y: 0.7 } });
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", async () => {
       initDevModeControl();
-      loadBackpackFromStorage();
+      await loadAllPersistentData();
       populateTemplateDropdown();
       populateDevSimulator();
       createDefaultCardBackground();
+      renderPresetThemeButtons();
       renderAllTabs();
       checkUrlParametersForAutoCollect();
       if (window.lucide) {
