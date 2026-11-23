@@ -98,7 +98,7 @@
         <div class="flex items-center justify-between">
           <div>
             <h3 class="text-sm font-black text-slate-900">STEP 01｜攤位 QR Code 掃描</h3>
-            <p class="text-[11px] text-slate-500">掃描帳篷立牌條碼，立即收入背包</p>
+            <p class="text-[11px] text-slate-500">建議使用網頁內建掃描器，收集紀錄最完整</p>
           </div>
           <button onclick="toggleCameraScanner()" class="px-4 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-black text-xs rounded-2xl shadow-md shadow-orange-500/25 flex items-center gap-1.5 active:scale-95 transition">
             <i data-lucide="qr-code" class="w-4 h-4"></i>
@@ -142,7 +142,7 @@
       <div class="bg-white rounded-3xl p-4 shadow-sm border border-orange-100 flex items-center justify-between">
         <div>
           <h2 class="text-base font-black text-slate-900">我的關鍵字背包</h2>
-          <p class="text-xs text-slate-500 mt-0.5">已自動保存於手機中，重整或關閉網頁也不會消失</p>
+          <p class="text-xs text-slate-500 mt-0.5">已自動保存於手機中（請避免使用無痕模式）</p>
         </div>
         <div class="text-right">
           <div id="collectedDeptCount" class="text-lg font-black text-orange-600">0 / 47</div>
@@ -414,7 +414,7 @@
       <div class="space-y-3 text-xs text-slate-600 leading-relaxed">
         <div class="bg-orange-50/70 p-3 rounded-2xl border border-orange-100">
           <div class="font-black text-orange-800 mb-0.5">STEP 01｜出發收集 🔍</div>
-          <p>前往 A、B、C 三個帳篷展區的各系攤位，掃描現場關鍵字 QR Code，一次解鎖該系 3 個關鍵字收入背包！</p>
+          <p>前往 A、B、C 三個帳篷展區的各系攤位，點擊本網頁<b>「開啟相機掃碼」</b>掃描現場 QR Code，一次解鎖該系 3 個關鍵字收入背包！</p>
         </div>
         <div class="bg-orange-50/70 p-3 rounded-2xl border border-orange-100">
           <div class="font-black text-orange-800 mb-0.5">STEP 02｜跨區拼出名場面 ✍️</div>
@@ -428,9 +428,13 @@
           <div class="font-black text-orange-800 mb-0.5">STEP 04｜生成專屬紀念卡 🎉</div>
           <p>儲存紀念卡後，向服務台工作人員出示完成畫面並輸入核銷密碼，即可兌換活動小禮物（每支手機限領一次）。</p>
         </div>
+        <div class="bg-slate-100 p-2.5 rounded-xl text-[11px] text-slate-500 flex items-start gap-1.5">
+          <span>💡</span>
+          <span>建議使用 Safari 或 Chrome 一般分頁遊玩（勿用無痕模式），並優先使用網頁內的「開啟相機掃碼」，紀錄才能完整保留喔！</span>
+        </div>
       </div>
 
-      <button onclick="closeRulesModal()" class="w-full py-3 bg-slate-900 text-white font-black text-xs rounded-2xl">
+      <button onclick="closeRulesModal()" class="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs rounded-2xl transition active:scale-95">
         我知道了，開始收集！
       </button>
     </div>
@@ -507,9 +511,10 @@
     /* =====================================================================
        1. 資料結構設定 (帳篷分區、官方底圖、科系資料、句子模板、顏色)
        ===================================================================== */
-    const STORAGE_KEY = "bike_festival_backpack_v3";
-    const REDEEM_STORAGE_KEY = "bike_festival_redeemed_v1";
-    const IDB_NAME = "BikeFestivalDB";
+    const STORAGE_KEY = "bike_festival_backpack_v4";
+    const REDEEM_STORAGE_KEY = "bike_festival_redeemed_v2";
+    const RULES_SEEN_KEY = "bike_festival_rules_seen_v1";
+    const IDB_NAME = "BikeFestivalDB_V2";
     const IDB_STORE = "AppStateStore";
 
     const TENT_ZONES = {
@@ -605,7 +610,7 @@
     ];
 
     /* =====================================================================
-       2. 核心全域狀態與多重持久化儲存
+       2. 核心全域狀態與四重同步持久化儲存引擎 (防手機滑掉清快取)
        ===================================================================== */
     const state = {
       backpack: [],
@@ -660,7 +665,7 @@
 
     function setBackupCookie(name, value) {
       try {
-        const expires = new Date(Date.now() + 30 * 864e5).toUTCString();
+        const expires = new Date(Date.now() + 60 * 864e5).toUTCString();
         document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
       } catch (e) {}
     }
@@ -674,13 +679,56 @@
       }
     }
 
+    // 同步讀取與寫入 window.name（即使頁面重整或同視窗導航也能即時保留）
+    function saveWindowNameBackup() {
+      try {
+        const payload = {
+          backpack: state.backpack,
+          redeemInfo: state.redeemInfo
+        };
+        window.name = "BF_STATE:" + JSON.stringify(payload);
+      } catch (e) {}
+    }
+
+    function loadWindowNameBackup() {
+      try {
+        if (window.name && window.name.startsWith("BF_STATE:")) {
+          return JSON.parse(window.name.slice(9));
+        }
+      } catch (e) {}
+      return null;
+    }
+
+    function saveBackpackToStorage() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state.backpack));
+      } catch (e) {}
+      saveToIndexedDB(STORAGE_KEY, state.backpack);
+      saveWindowNameBackup();
+      const uniqueDeptIds = Array.from(new Set(state.backpack.map(i => i.deptId))).join(",");
+      setBackupCookie("bf_depts_v2", uniqueDeptIds);
+    }
+
+    function saveRedeemStateToStorage() {
+      if (!state.redeemInfo) return;
+      try {
+        localStorage.setItem(REDEEM_STORAGE_KEY, JSON.stringify(state.redeemInfo));
+      } catch (e) {}
+      saveToIndexedDB(REDEEM_STORAGE_KEY, state.redeemInfo);
+      saveWindowNameBackup();
+      setBackupCookie("bf_redeemed_v2", state.redeemInfo.time);
+    }
+
     async function loadAllPersistentData() {
       let loadedBackpack = null;
+
+      // 1. 優先讀取 localStorage
       try {
         const lsRaw = localStorage.getItem(STORAGE_KEY);
         if (lsRaw) loadedBackpack = JSON.parse(lsRaw);
       } catch (e) {}
 
+      // 2. 備援：讀取 IndexedDB
       if (!loadedBackpack || loadedBackpack.length === 0) {
         const idbData = await loadFromIndexedDB(STORAGE_KEY);
         if (idbData && Array.isArray(idbData) && idbData.length > 0) {
@@ -688,8 +736,17 @@
         }
       }
 
+      // 3. 備援：讀取 window.name
       if (!loadedBackpack || loadedBackpack.length === 0) {
-        const cookieDepts = getBackupCookie("bf_depts");
+        const winData = loadWindowNameBackup();
+        if (winData && Array.isArray(winData.backpack) && winData.backpack.length > 0) {
+          loadedBackpack = winData.backpack;
+        }
+      }
+
+      // 4. 備援：讀取長效 Cookie 科系 ID 還原
+      if (!loadedBackpack || loadedBackpack.length === 0) {
+        const cookieDepts = getBackupCookie("bf_depts_v2") || getBackupCookie("bf_depts");
         if (cookieDepts) {
           const deptIds = cookieDepts.split(",").filter(Boolean);
           loadedBackpack = [];
@@ -709,6 +766,7 @@
         saveBackpackToStorage();
       }
 
+      // 載入兌獎狀態（同樣四重備援）
       let loadedRedeem = null;
       try {
         const lsRedeem = localStorage.getItem(REDEEM_STORAGE_KEY);
@@ -718,9 +776,12 @@
       if (!loadedRedeem) {
         loadedRedeem = await loadFromIndexedDB(REDEEM_STORAGE_KEY);
       }
-
       if (!loadedRedeem) {
-        const cookieRedeem = getBackupCookie("bf_redeemed");
+        const winData = loadWindowNameBackup();
+        if (winData && winData.redeemInfo) loadedRedeem = winData.redeemInfo;
+      }
+      if (!loadedRedeem) {
+        const cookieRedeem = getBackupCookie("bf_redeemed_v2") || getBackupCookie("bf_redeemed");
         if (cookieRedeem) {
           loadedRedeem = { redeemed: true, time: cookieRedeem };
         }
@@ -732,26 +793,41 @@
       }
     }
 
-    function saveBackpackToStorage() {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state.backpack));
-      } catch (e) {}
-      saveToIndexedDB(STORAGE_KEY, state.backpack);
-      const uniqueDeptIds = Array.from(new Set(state.backpack.map(i => i.deptId))).join(",");
-      setBackupCookie("bf_depts", uniqueDeptIds);
-    }
+    // 監聽手機把網頁滑掉、切到背景或關閉分頁的瞬間，強制同步寫入所有儲存區
+    window.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") {
+        saveBackpackToStorage();
+        saveRedeemStateToStorage();
+      }
+    });
+    window.addEventListener("pagehide", () => {
+      saveBackpackToStorage();
+      saveRedeemStateToStorage();
+    });
 
-    function saveRedeemStateToStorage() {
-      if (!state.redeemInfo) return;
+    /* =====================================================================
+       3. 首次進入自動跳出「玩法說明」邏輯
+       ===================================================================== */
+    function checkAndShowFirstTimeRules() {
+      let hasSeen = false;
       try {
-        localStorage.setItem(REDEEM_STORAGE_KEY, JSON.stringify(state.redeemInfo));
+        if (localStorage.getItem(RULES_SEEN_KEY) === "1") hasSeen = true;
       } catch (e) {}
-      saveToIndexedDB(REDEEM_STORAGE_KEY, state.redeemInfo);
-      setBackupCookie("bf_redeemed", state.redeemInfo.time);
+      if (!hasSeen && getBackupCookie(RULES_SEEN_KEY) === "1") {
+        hasSeen = true;
+      }
+
+      if (!hasSeen) {
+        openRulesModal();
+        try {
+          localStorage.setItem(RULES_SEEN_KEY, "1");
+        } catch (e) {}
+        setBackupCookie(RULES_SEEN_KEY, "1");
+      }
     }
 
     /* =====================================================================
-       3. 掃描與收集關鍵字邏輯
+       4. 掃描與收集關鍵字邏輯
        ===================================================================== */
     function startCameraScanner() {
       if (typeof Html5Qrcode === "undefined") {
@@ -913,7 +989,7 @@
     }
 
     /* =====================================================================
-       4. 彈窗與提示訊息控制
+       5. 彈窗與提示訊息控制
        ===================================================================== */
     function showToast(msg) {
       const toast = document.getElementById("toastMessage");
@@ -966,7 +1042,7 @@
     }
 
     /* =====================================================================
-       5. 工作人員密碼核銷與單機限領一次機制
+       6. 工作人員密碼核銷與單機限領一次機制
        ===================================================================== */
     function renderRedeemUI() {
       const pendingBox = document.getElementById("redeemPendingBox");
@@ -1030,7 +1106,7 @@
     }
 
     /* =====================================================================
-       6. 造句工坊邏輯 (包含 A、B、C 三個帳篷區域跨區檢查)
+       7. 造句工坊邏輯 (包含 A、B、C 三個帳篷區域跨區檢查)
        ===================================================================== */
     function populateTemplateDropdown() {
       const select = document.getElementById("templateSelect");
@@ -1071,7 +1147,6 @@
         s => s && s.zone === zone
       );
       if (sameZoneSlotIdx !== -1) {
-        const oldSlot = state.selectedSlots[sameZoneSlotIdx];
         const zoneLabel = TENT_ZONES[zone]?.name || `${zone} 區`;
         state.selectedSlots[sameZoneSlotIdx] = { deptId, deptName, zone, keyword };
         renderCraftUI();
@@ -1101,7 +1176,7 @@
     }
 
     /* =====================================================================
-       7. UI 渲染與分頁切換
+       8. UI 渲染與分頁切換
        ===================================================================== */
     function switchTab(tabName) {
       if (tabName !== "collect" && state.isScannerActive) {
@@ -1309,7 +1384,7 @@
     }
 
     /* =====================================================================
-       8. 紀念卡官方主題底圖選擇器、Canvas 繪製與下載匯出
+       9. 紀念卡官方主題底圖選擇器、Canvas 繪製與下載匯出
        ===================================================================== */
     function renderPresetThemeButtons() {
       const container = document.getElementById("presetThemeSelector");
@@ -1583,7 +1658,7 @@
     }
 
     /* =====================================================================
-       9. 模擬器、47系 QR Code 產生器、規則說明與慶祝特效
+       10. 模擬器、47系 QR Code 產生器、規則說明與慶祝特效
        ===================================================================== */
     function initDevModeControl() {
       const urlParams = new URLSearchParams(window.location.search);
@@ -1612,7 +1687,6 @@
         }).join("");
       }
 
-      // 填充 QR 產生器科系選單與預設網址
       const baseUrlInput = document.getElementById("qrBaseUrlInput");
       if (baseUrlInput) {
         baseUrlInput.value = window.location.origin + window.location.pathname;
@@ -1689,7 +1763,6 @@
       const sourceCanvas = targetDiv.querySelector("canvas");
       const sourceImg = targetDiv.querySelector("img");
 
-      // 繪製一張包含科系標題與高畫質 QR Code 的列印用 PNG 圖卡
       const exportCanvas = document.createElement("canvas");
       exportCanvas.width = 600;
       exportCanvas.height = 720;
@@ -1778,6 +1851,7 @@
       renderPresetThemeButtons();
       renderAllTabs();
       checkUrlParametersForAutoCollect();
+      checkAndShowFirstTimeRules();
       if (window.lucide) {
         lucide.createIcons();
       }
