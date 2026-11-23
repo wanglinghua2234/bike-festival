@@ -38,12 +38,28 @@
     #qr-reader__scan_region {
       background: transparent !important;
     }
+    @keyframes pulseBorder {
+      0%, 100% { border-color: rgba(16, 185, 129, 0.5); }
+      50% { border-color: rgba(52, 211, 153, 1); }
+    }
+    .redeem-verified-card {
+      animation: pulseBorder 2s infinite;
+    }
   </style>
 </head>
 <body class="text-slate-800 min-h-screen flex flex-col justify-between bg-gradient-to-b from-orange-50 via-amber-50/40 to-orange-100/50">
 
   <!-- Toast 全域浮動提示 -->
   <div id="toastMessage" class="fixed top-16 left-1/2 -translate-x-1/2 z-50 hidden max-w-[90vw] bg-slate-900/95 text-white text-xs font-bold px-4 py-2.5 rounded-2xl shadow-xl border border-slate-700 text-center backdrop-blur-md transition-all">
+  </div>
+
+  <!-- 內建瀏覽器 (LINE / IG) 提醒橫幅 -->
+  <div id="inAppBrowserBanner" class="hidden bg-rose-600 text-white px-4 py-2.5 text-xs font-bold flex items-center justify-between gap-2 shadow-md">
+    <div class="flex items-center gap-2">
+      <span>⚠️</span>
+      <span>偵測到 LINE / IG 內建瀏覽器，關閉視窗可能會清掉紀錄！建議點右上角「⋮」選擇<b>以 Safari / Chrome 開啟</b>，或使用下方「備份碼」轉移進度。</span>
+    </div>
+    <button onclick="document.getElementById('inAppBrowserBanner').classList.add('hidden')" class="text-white/80 hover:text-white px-1.5">✕</button>
   </div>
 
   <!-- 頂部導覽列 -->
@@ -87,7 +103,7 @@
           </div>
           <h2 class="text-xl font-black leading-snug">收集關鍵字，<br>拼出你的單車節名場面！</h2>
           <p class="text-xs text-orange-50 leading-relaxed">
-            穿梭 A、B、C 三個帳篷展區掃描 QR Code，一次解鎖該系 3 個關鍵字，集滿三個不同區域的科系就能創作紀念卡！
+            穿梭 A、B、C 三個帳篷展區掃描 QR Code，一次解鎖該系 3 個關鍵字，集滿三個不同區域的科系就能創作紀念卡並兌換禮物！
           </p>
         </div>
         <div class="absolute -right-4 -bottom-6 text-8xl opacity-20 select-none pointer-events-none">🚲</div>
@@ -98,7 +114,7 @@
         <div class="flex items-center justify-between">
           <div>
             <h3 class="text-sm font-black text-slate-900">STEP 01｜攤位 QR Code 掃描</h3>
-            <p class="text-[11px] text-slate-500">建議使用網頁內建掃描器，收集紀錄最完整</p>
+            <p class="text-[11px] text-slate-500">進度會即時同步至網址與手機快取中</p>
           </div>
           <button onclick="toggleCameraScanner()" class="px-4 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-black text-xs rounded-2xl shadow-md shadow-orange-500/25 flex items-center gap-1.5 active:scale-95 transition">
             <i data-lucide="qr-code" class="w-4 h-4"></i>
@@ -142,7 +158,7 @@
       <div class="bg-white rounded-3xl p-4 shadow-sm border border-orange-100 flex items-center justify-between">
         <div>
           <h2 class="text-base font-black text-slate-900">我的關鍵字背包</h2>
-          <p class="text-xs text-slate-500 mt-0.5">已自動保存於手機中（請避免使用無痕模式）</p>
+          <p class="text-xs text-slate-500 mt-0.5">已啟用網址與手機多重自動備份保護</p>
         </div>
         <div class="text-right">
           <div id="collectedDeptCount" class="text-lg font-black text-orange-600">0 / 47</div>
@@ -152,7 +168,30 @@
 
       <div id="backpackListContainer" class="space-y-2.5"></div>
 
-      <div class="pt-2 space-y-2.5">
+      <!-- 跨瀏覽器／防遺失備份還原區 -->
+      <div class="bg-amber-50/90 border border-amber-200 rounded-2xl p-3.5 space-y-2.5">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-black text-amber-950 flex items-center gap-1">
+            <span>🛡️</span> 雙重進度備份與跨瀏覽器還原
+          </span>
+          <span class="text-[10px] font-bold text-amber-700">防滑掉／換瀏覽器必備</span>
+        </div>
+        <p class="text-[11px] text-amber-800 leading-relaxed">
+          系統已自動將你的進度同步至網址列。若不小心在不同 App（如 LINE 與 Safari）間切換，可隨時複製備份碼一鍵還原：
+        </p>
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="copyProgressBackupCode()" class="py-2.5 bg-white hover:bg-orange-50 border border-amber-300 text-slate-800 font-black text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-xs transition active:scale-95">
+            <i data-lucide="copy" class="w-3.5 h-3.5 text-orange-500"></i>
+            <span>複製進度備份碼</span>
+          </button>
+          <button onclick="openRestoreCodeModal()" class="py-2.5 bg-white hover:bg-sky-50 border border-amber-300 text-slate-800 font-black text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-xs transition active:scale-95">
+            <i data-lucide="download-cloud" class="w-3.5 h-3.5 text-sky-600"></i>
+            <span>貼上還原碼</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="pt-1 space-y-2.5">
         <button onclick="switchTab('craft')" class="w-full py-3.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black text-sm rounded-2xl shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2 active:scale-95 transition">
           <i data-lucide="pen-tool" class="w-4 h-4"></i>
           <span>前往造句工坊拼名場面</span>
@@ -219,7 +258,7 @@
       </div>
     </section>
 
-    <!-- ==================== TAB 4: 專屬紀念卡 ==================== -->
+    <!-- ==================== TAB 4: 專屬紀念卡 & 禮物兌換 ==================== -->
     <section id="section-card" class="hidden space-y-4">
       <div class="bg-white rounded-3xl p-4 shadow-sm border border-orange-100 space-y-3">
         <div class="flex items-center justify-between">
@@ -281,31 +320,44 @@
           <span>返回重新造句</span>
         </button>
 
-        <!-- 工作人員兌換核銷專區 (限一機兌換一次) -->
+        <!-- 工作人員兌換核銷專區 (限一機兌換一次 + 防偽動態憑證) -->
         <div id="staffRedeemSection" class="mt-4 pt-4 border-t-2 border-dashed border-slate-200">
-          <div id="redeemPendingBox" class="bg-emerald-50 border border-emerald-200 rounded-2xl p-3.5 flex items-center justify-between gap-3">
-            <div>
-              <div class="text-xs font-black text-emerald-900 flex items-center gap-1">
-                <span>🎁</span> 活動禮物兌換區（限領一次）
+          <!-- 尚未兌換狀態 -->
+          <div id="redeemPendingBox" class="bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-200 rounded-2xl p-4 space-y-2.5 shadow-xs">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <div class="text-sm font-black text-emerald-950 flex items-center gap-1.5">
+                  <span>🎁</span> 服務台限定小禮物兌換
+                </div>
+                <p class="text-[11px] text-emerald-800 mt-1 leading-relaxed">
+                  集齊三區關鍵字並完成造句後，請至大會服務台出示此畫面，由<b>工作人員點擊核銷按鈕並輸入密碼</b>領取禮物（每支手機嚴格限領一次）。
+                </p>
               </div>
-              <p class="text-[11px] text-emerald-700 mt-0.5">請向服務台工作人員出示此畫面進行密碼核銷</p>
             </div>
-            <button onclick="openStaffRedeemModal()" class="shrink-0 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl shadow-sm active:scale-95 transition">
-              工作人員核銷
+            <button onclick="openStaffRedeemModal()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl shadow-md shadow-emerald-600/20 flex items-center justify-center gap-1.5 active:scale-95 transition">
+              <i data-lucide="shield-check" class="w-4 h-4"></i>
+              <span>工作人員核銷兌換（限領一次）</span>
             </button>
           </div>
 
-          <div id="redeemCompletedBox" class="hidden bg-slate-800 text-white rounded-2xl p-3.5 flex items-center justify-between gap-3 shadow-inner">
-            <div class="flex items-center gap-2.5">
-              <div class="w-9 h-9 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
-                <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+          <!-- 已完成核銷狀態 (永久鎖定 + 動態防偽憑證) -->
+          <div id="redeemCompletedBox" class="hidden bg-slate-900 text-white rounded-2xl p-4 border-2 border-emerald-500 redeem-verified-card shadow-lg space-y-2.5">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                  <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+                </div>
+                <div>
+                  <div class="text-xs font-black text-emerald-400">✅ 此手機已完成禮物兌換</div>
+                  <div class="text-[10px] text-slate-400">系統已鎖定本裝置兌獎資格</div>
+                </div>
               </div>
-              <div>
-                <div class="text-xs font-black text-emerald-400">✅ 此手機已完成禮物兌換</div>
-                <p id="redeemTimestampText" class="text-[10px] text-slate-300 mt-0.5 font-mono">核銷時間：--</p>
-              </div>
+              <span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-2.5 py-1 rounded-full font-black border border-emerald-500/40">已核銷鎖定</span>
             </div>
-            <span class="text-[10px] bg-slate-700 text-slate-300 px-2.5 py-1 rounded-full font-bold border border-slate-600">已鎖定</span>
+            <div class="bg-slate-800/90 rounded-xl p-2.5 flex items-center justify-between text-[11px] font-mono border border-slate-700">
+              <span id="redeemTimestampText" class="text-slate-300">時間：--</span>
+              <span id="redeemCodeText" class="text-amber-300 font-bold">序號：--</span>
+            </div>
           </div>
         </div>
       </div>
@@ -375,6 +427,28 @@
     </div>
   </div>
 
+  <!-- MODAL 2.5: 輸入進度還原碼視窗 -->
+  <div id="restoreCodeModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-xs w-full p-5 text-center shadow-2xl space-y-4">
+      <div class="w-12 h-12 bg-sky-100 text-sky-600 rounded-full flex items-center justify-center mx-auto">
+        <i data-lucide="key-round" class="w-6 h-6"></i>
+      </div>
+      <div>
+        <h3 class="text-base font-black text-slate-900">還原收集進度</h3>
+        <p class="text-xs text-slate-500 mt-1">貼上先前複製的「進度備份碼」，即可立即找回所有關鍵字：</p>
+      </div>
+      <input type="text" id="restoreCodeInput" placeholder="例如：BF:fllo,chem,ee" class="w-full text-center font-mono text-xs font-bold bg-slate-50 border-2 border-slate-200 focus:border-sky-500 rounded-xl py-2.5 px-3 focus:outline-none">
+      <div class="flex gap-2">
+        <button onclick="document.getElementById('restoreCodeModal').classList.add('hidden')" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">
+          取消
+        </button>
+        <button onclick="applyProgressBackupCode()" class="flex-1 py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl text-xs transition shadow-md">
+          立即還原
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL 3: 工作人員密碼核銷視窗 -->
   <div id="staffRedeemModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-xs w-full p-5 text-center shadow-2xl space-y-4">
@@ -383,7 +457,7 @@
       </div>
       <div>
         <h3 class="text-base font-black text-slate-900">工作人員兌獎核銷</h3>
-        <p class="text-xs text-slate-500 mt-1">請輸入工作人員核銷密碼，確認後此手機將標記為已兌換（限換一次）：</p>
+        <p class="text-xs text-slate-500 mt-1">請確認玩家已收集 A、B、C 三區並完成紀念卡，輸入工作人員密碼後此手機將永久鎖定為已兌換：</p>
       </div>
       <div>
         <input type="password" inputmode="numeric" id="staffPinInput" placeholder="請輸入核銷密碼" class="w-full text-center tracking-widest text-base font-black bg-slate-50 border-2 border-slate-200 focus:border-emerald-500 rounded-xl py-2.5 px-3 focus:outline-none">
@@ -393,7 +467,7 @@
           取消
         </button>
         <button onclick="verifyAndRedeemGift()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition shadow-md">
-          確認核銷
+          確認核銷發獎
         </button>
       </div>
     </div>
@@ -424,9 +498,9 @@
           <div class="font-black text-orange-800 mb-0.5">STEP 03｜挑選底圖或拍下故事 📸</div>
           <p>可直接使用官方精選底圖，或自己拍攝現場照片作為背景，打造專屬紀念卡！</p>
         </div>
-        <div class="bg-orange-50/70 p-3 rounded-2xl border border-orange-100">
-          <div class="font-black text-orange-800 mb-0.5">STEP 04｜生成專屬紀念卡 🎉</div>
-          <p>儲存紀念卡後，向服務台工作人員出示完成畫面並輸入核銷密碼，即可兌換活動小禮物（每支手機限領一次）。</p>
+        <div class="bg-emerald-50/80 p-3 rounded-2xl border border-emerald-200">
+          <div class="font-black text-emerald-900 mb-0.5">STEP 04｜服務台核銷換小禮物 🎁</div>
+          <p>完成專屬紀念卡後，前往服務台出示畫面由工作人員輸入密碼核銷，即可兌換小禮物（每支手機限領一次）。</p>
         </div>
         <div class="bg-slate-100 p-2.5 rounded-xl text-[11px] text-slate-500 flex items-start gap-1.5">
           <span>💡</span>
@@ -511,10 +585,10 @@
     /* =====================================================================
        1. 資料結構設定 (帳篷分區、官方底圖、科系資料、句子模板、顏色)
        ===================================================================== */
-    const STORAGE_KEY = "bike_festival_backpack_v4";
-    const REDEEM_STORAGE_KEY = "bike_festival_redeemed_v2";
+    const STORAGE_KEY = "bike_festival_backpack_v5";
+    const REDEEM_STORAGE_KEY = "bike_festival_redeemed_v3";
     const RULES_SEEN_KEY = "bike_festival_rules_seen_v1";
-    const IDB_NAME = "BikeFestivalDB_V2";
+    const IDB_NAME = "BikeFestivalDB_V3";
     const IDB_STORE = "AppStateStore";
 
     const TENT_ZONES = {
@@ -610,7 +684,7 @@
     ];
 
     /* =====================================================================
-       2. 核心全域狀態與四重同步持久化儲存引擎 (防手機滑掉清快取)
+       2. 核心全域狀態與七重持久化儲存引擎 (含網址 Hash 自動同步防遺失)
        ===================================================================== */
     const state = {
       backpack: [],
@@ -698,34 +772,109 @@
       return null;
     }
 
-    function saveBackpackToStorage() {
+    async function saveToCacheStorage(key, val) {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state.backpack));
+        if ("caches" in window) {
+          const cache = await caches.open("bike-festival-persist-v2");
+          await cache.put("/" + key, new Response(JSON.stringify(val)));
+        }
+      } catch (e) {}
+    }
+
+    async function loadFromCacheStorage(key) {
+      try {
+        if ("caches" in window) {
+          const cache = await caches.open("bike-festival-persist-v2");
+          const res = await cache.match("/" + key);
+          if (res) return await res.json();
+        }
+      } catch (e) {}
+      return null;
+    }
+
+    // 即時將收集進度與已兌獎狀態同步到網址列 Hash，讓瀏覽器歷史紀錄與書籤自動記住狀態
+    function syncStateToUrlHash() {
+      try {
+        const uniqueDeptIds = Array.from(new Set(state.backpack.map(i => i.deptId)));
+        const params = new URLSearchParams();
+        if (uniqueDeptIds.length > 0) {
+          params.set("bf", uniqueDeptIds.join(","));
+        }
+        if (state.redeemInfo && state.redeemInfo.redeemed) {
+          params.set("rd", state.redeemInfo.code || "1");
+        }
+        const hashStr = params.toString();
+        const newUrl = window.location.pathname + window.location.search + (hashStr ? "#" + hashStr : "");
+        window.history.replaceState(null, "", newUrl);
+      } catch (e) {}
+    }
+
+    function saveBackpackToStorage() {
+      const jsonStr = JSON.stringify(state.backpack);
+      try {
+        localStorage.setItem(STORAGE_KEY, jsonStr);
+        sessionStorage.setItem(STORAGE_KEY, jsonStr);
       } catch (e) {}
       saveToIndexedDB(STORAGE_KEY, state.backpack);
+      saveToCacheStorage(STORAGE_KEY, state.backpack);
       saveWindowNameBackup();
       const uniqueDeptIds = Array.from(new Set(state.backpack.map(i => i.deptId))).join(",");
-      setBackupCookie("bf_depts_v2", uniqueDeptIds);
+      setBackupCookie("bf_depts_v3", uniqueDeptIds);
+      syncStateToUrlHash();
     }
 
     function saveRedeemStateToStorage() {
       if (!state.redeemInfo) return;
+      const jsonStr = JSON.stringify(state.redeemInfo);
       try {
-        localStorage.setItem(REDEEM_STORAGE_KEY, JSON.stringify(state.redeemInfo));
+        localStorage.setItem(REDEEM_STORAGE_KEY, jsonStr);
+        sessionStorage.setItem(REDEEM_STORAGE_KEY, jsonStr);
       } catch (e) {}
       saveToIndexedDB(REDEEM_STORAGE_KEY, state.redeemInfo);
+      saveToCacheStorage(REDEEM_STORAGE_KEY, state.redeemInfo);
       saveWindowNameBackup();
-      setBackupCookie("bf_redeemed_v2", state.redeemInfo.time);
+      setBackupCookie("bf_redeemed_v3", JSON.stringify(state.redeemInfo));
+      syncStateToUrlHash();
+    }
+
+    function hydrateBackpackFromDeptIds(deptIds) {
+      const list = [];
+      deptIds.forEach(dId => {
+        const dept = DEPARTMENT_DATA.find(d => d.id.toLowerCase() === dId.toLowerCase());
+        if (dept && !list.some(item => item.deptId === dept.id)) {
+          dept.keywords.forEach(kw => {
+            list.push({ deptId: dept.id, deptName: dept.name, zone: dept.zone, keyword: kw, acquiredAt: Date.now() });
+          });
+        }
+      });
+      return list;
     }
 
     async function loadAllPersistentData() {
       let loadedBackpack = null;
 
+      // 1. 優先檢查網址 Hash 是否有帶進度 (#bf=fllo,chem,ee)
       try {
-        const lsRaw = localStorage.getItem(STORAGE_KEY);
-        if (lsRaw) loadedBackpack = JSON.parse(lsRaw);
+        if (window.location.hash && window.location.hash.length > 1) {
+          const hashParams = new URLSearchParams(window.location.hash.slice(1));
+          const bfHash = hashParams.get("bf");
+          if (bfHash) {
+            const ids = bfHash.split(",").filter(Boolean);
+            const fromHash = hydrateBackpackFromDeptIds(ids);
+            if (fromHash.length > 0) loadedBackpack = fromHash;
+          }
+        }
       } catch (e) {}
 
+      // 2. 檢查 localStorage / sessionStorage
+      if (!loadedBackpack || loadedBackpack.length === 0) {
+        try {
+          const lsRaw = localStorage.getItem(STORAGE_KEY) || sessionStorage.getItem(STORAGE_KEY);
+          if (lsRaw) loadedBackpack = JSON.parse(lsRaw);
+        } catch (e) {}
+      }
+
+      // 3. 檢查 IndexedDB
       if (!loadedBackpack || loadedBackpack.length === 0) {
         const idbData = await loadFromIndexedDB(STORAGE_KEY);
         if (idbData && Array.isArray(idbData) && idbData.length > 0) {
@@ -733,6 +882,15 @@
         }
       }
 
+      // 4. 檢查 Cache Storage
+      if (!loadedBackpack || loadedBackpack.length === 0) {
+        const cacheData = await loadFromCacheStorage(STORAGE_KEY);
+        if (cacheData && Array.isArray(cacheData) && cacheData.length > 0) {
+          loadedBackpack = cacheData;
+        }
+      }
+
+      // 5. 檢查 window.name
       if (!loadedBackpack || loadedBackpack.length === 0) {
         const winData = loadWindowNameBackup();
         if (winData && Array.isArray(winData.backpack) && winData.backpack.length > 0) {
@@ -740,19 +898,11 @@
         }
       }
 
+      // 6. 檢查長效 Cookie
       if (!loadedBackpack || loadedBackpack.length === 0) {
-        const cookieDepts = getBackupCookie("bf_depts_v2") || getBackupCookie("bf_depts");
+        const cookieDepts = getBackupCookie("bf_depts_v3") || getBackupCookie("bf_depts_v2");
         if (cookieDepts) {
-          const deptIds = cookieDepts.split(",").filter(Boolean);
-          loadedBackpack = [];
-          deptIds.forEach(dId => {
-            const dept = DEPARTMENT_DATA.find(d => d.id === dId);
-            if (dept) {
-              dept.keywords.forEach(kw => {
-                loadedBackpack.push({ deptId: dept.id, deptName: dept.name, zone: dept.zone, keyword: kw, acquiredAt: Date.now() });
-              });
-            }
-          });
+          loadedBackpack = hydrateBackpackFromDeptIds(cookieDepts.split(",").filter(Boolean));
         }
       }
 
@@ -761,30 +911,99 @@
         saveBackpackToStorage();
       }
 
+      // 讀取兌獎核銷鎖定紀錄
       let loadedRedeem = null;
       try {
-        const lsRedeem = localStorage.getItem(REDEEM_STORAGE_KEY);
+        const lsRedeem = localStorage.getItem(REDEEM_STORAGE_KEY) || sessionStorage.getItem(REDEEM_STORAGE_KEY);
         if (lsRedeem) loadedRedeem = JSON.parse(lsRedeem);
       } catch (e) {}
 
-      if (!loadedRedeem) {
-        loadedRedeem = await loadFromIndexedDB(REDEEM_STORAGE_KEY);
-      }
+      if (!loadedRedeem) loadedRedeem = await loadFromIndexedDB(REDEEM_STORAGE_KEY);
+      if (!loadedRedeem) loadedRedeem = await loadFromCacheStorage(REDEEM_STORAGE_KEY);
       if (!loadedRedeem) {
         const winData = loadWindowNameBackup();
         if (winData && winData.redeemInfo) loadedRedeem = winData.redeemInfo;
       }
       if (!loadedRedeem) {
-        const cookieRedeem = getBackupCookie("bf_redeemed_v2") || getBackupCookie("bf_redeemed");
+        const cookieRedeem = getBackupCookie("bf_redeemed_v3") || getBackupCookie("bf_redeemed_v2");
         if (cookieRedeem) {
-          loadedRedeem = { redeemed: true, time: cookieRedeem };
+          try {
+            loadedRedeem = JSON.parse(cookieRedeem);
+          } catch (e) {
+            loadedRedeem = { redeemed: true, time: cookieRedeem, code: "VERIFIED" };
+          }
         }
+      }
+      if (!loadedRedeem && window.location.hash.includes("rd=")) {
+        loadedRedeem = { redeemed: true, time: "已核銷紀錄", code: "LOCKED" };
       }
 
       state.redeemInfo = loadedRedeem || null;
       if (state.redeemInfo && state.redeemInfo.redeemed) {
         saveRedeemStateToStorage();
       }
+    }
+
+    function detectInAppBrowser() {
+      const ua = navigator.userAgent || navigator.vendor || window.opera || "";
+      const isInApp = /Line\/|FBAN|FBAV|Instagram/i.test(ua);
+      const banner = document.getElementById("inAppBrowserBanner");
+      if (isInApp && banner) {
+        banner.classList.remove("hidden");
+      }
+    }
+
+    function copyProgressBackupCode() {
+      const uniqueDeptIds = Array.from(new Set(state.backpack.map(i => i.deptId)));
+      if (uniqueDeptIds.length === 0) {
+        showToast("背包目前還是空的，先收集幾個科系再備份吧！");
+        return;
+      }
+      const code = "BF:" + uniqueDeptIds.join(",");
+      const tempInput = document.createElement("textarea");
+      tempInput.value = code;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      document.execCommand("copy");
+      document.body.removeChild(tempInput);
+      showToast(`📋 已複製備份碼（${code}），切換瀏覽器時貼上即可還原！`);
+    }
+
+    function openRestoreCodeModal() {
+      const input = document.getElementById("restoreCodeInput");
+      if (input) input.value = "";
+      document.getElementById("restoreCodeModal").classList.remove("hidden");
+    }
+
+    function applyProgressBackupCode() {
+      const input = document.getElementById("restoreCodeInput");
+      const raw = input ? input.value.trim() : "";
+      if (!raw) return;
+
+      const cleanStr = raw.replace(/^BF:/i, "");
+      const ids = cleanStr.split(",").map(s => s.trim()).filter(Boolean);
+      let restoredCount = 0;
+
+      ids.forEach(dId => {
+        const dept = DEPARTMENT_DATA.find(d => d.id.toLowerCase() === dId.toLowerCase());
+        if (dept && !state.backpack.some(item => item.deptId === dept.id)) {
+          dept.keywords.forEach(kw => {
+            state.backpack.push({
+              deptId: dept.id,
+              deptName: dept.name,
+              zone: dept.zone,
+              keyword: kw,
+              acquiredAt: Date.now()
+            });
+          });
+          restoredCount++;
+        }
+      });
+
+      saveBackpackToStorage();
+      renderAllTabs();
+      document.getElementById("restoreCodeModal").classList.add("hidden");
+      showToast(`✅ 成功還原 ${restoredCount} 個科系的關鍵字！`);
     }
 
     window.addEventListener("visibilitychange", () => {
@@ -975,7 +1194,7 @@
         const deptParam = params.get("dept");
         if (deptParam) {
           collectDepartmentKeywords(deptParam);
-          const cleanUrl = window.location.origin + window.location.pathname;
+          const cleanUrl = window.location.origin + window.location.pathname + window.location.hash;
           window.history.replaceState({}, document.title, cleanUrl);
         }
       } catch (e) {}
@@ -1035,12 +1254,13 @@
     }
 
     /* =====================================================================
-       6. 工作人員密碼核銷與單機限領一次機制
+       6. 工作人員密碼核銷與單機限領一次機制 (含防偽序號)
        ===================================================================== */
     function renderRedeemUI() {
       const pendingBox = document.getElementById("redeemPendingBox");
       const completedBox = document.getElementById("redeemCompletedBox");
       const timestampText = document.getElementById("redeemTimestampText");
+      const codeText = document.getElementById("redeemCodeText");
 
       if (!pendingBox || !completedBox) return;
 
@@ -1048,7 +1268,10 @@
         pendingBox.classList.add("hidden");
         completedBox.classList.remove("hidden");
         if (timestampText) {
-          timestampText.innerText = `核銷時間：${state.redeemInfo.time}`;
+          timestampText.innerText = `時間：${state.redeemInfo.time}`;
+        }
+        if (codeText) {
+          codeText.innerText = `序號：#${state.redeemInfo.code || "BF2026"}`;
         }
       } else {
         pendingBox.classList.remove("hidden");
@@ -1085,17 +1308,19 @@
       }
 
       const now = new Date();
-      const timeStr = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      const timeStr = `${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+      const randomSerial = "BF-" + Math.random().toString(36).substring(2, 6).toUpperCase();
 
       state.redeemInfo = {
         redeemed: true,
-        time: timeStr
+        time: timeStr,
+        code: randomSerial
       };
       saveRedeemStateToStorage();
       closeStaffRedeemModal();
       renderRedeemUI();
       triggerConfetti();
-      showToast("🎉 核銷成功！此手機已記錄為已兌換");
+      showToast("🎉 核銷成功！此手機已鎖定為已兌換");
     }
 
     /* =====================================================================
@@ -1193,6 +1418,7 @@
       if (tabName === "card") {
         renderPresetThemeButtons();
         updateCardCanvas();
+        renderRedeemUI();
       }
     }
 
@@ -1836,6 +2062,7 @@
     }
 
     window.addEventListener("DOMContentLoaded", async () => {
+      detectInAppBrowser();
       initDevModeControl();
       await loadAllPersistentData();
       populateTemplateDropdown();
