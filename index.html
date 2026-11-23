@@ -1761,7 +1761,7 @@
 
       drawWrappedSentence(ctx, segments, width / 2, 560, 860, 86);
 
-      const deptNames = state.selectedSlots.map(s => s ? `${s.deptName}(${s.zone}區)` : "未選系").join(" × ");
+      const deptNames = state.selectedSlots.map(s => s ? `${s.deptName}` : "未選系").join(" × ");
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
 
