@@ -320,13 +320,13 @@
                   <span>🎁</span> 服務台限定小禮物兌換
                 </div>
                 <p class="text-[11px] text-emerald-800 mt-1 leading-relaxed">
-                  集齊三區關鍵字並完成造句後，請至大會服務台出示此畫面，由<b>工作人員點擊核銷按鈕並輸入密碼</b>領取禮物（每支手機嚴格限領一次）。
+                  集齊三區關鍵字並完成造句後，請至大會服務台出示此畫面，由<b>工作人員點擊核銷按鈕並輸入密碼</b>領取禮物。
                 </p>
               </div>
             </div>
             <button onclick="openStaffRedeemModal()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl shadow-md shadow-emerald-600/20 flex items-center justify-center gap-1.5 active:scale-95 transition">
               <i data-lucide="shield-check" class="w-4 h-4"></i>
-              <span>工作人員核銷兌換（限領一次）</span>
+              <span>工作人員核銷兌換</span>
             </button>
           </div>
 
@@ -339,10 +339,10 @@
                 </div>
                 <div>
                   <div class="text-xs font-black text-emerald-400">✅ 此手機已完成禮物兌換</div>
-                  <div class="text-[10px] text-slate-400">系統已鎖定本裝置兌獎資格</div>
+                  <div class="text-[10px] text-slate-400">禮物已核銷完成</div>
                 </div>
               </div>
-              <span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-2.5 py-1 rounded-full font-black border border-emerald-500/40">已核銷鎖定</span>
+              <span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-2.5 py-1 rounded-full font-black border border-emerald-500/40">已核銷</span>
             </div>
             <div class="bg-slate-800/90 rounded-xl p-2.5 flex items-center justify-between text-[11px] font-mono border border-slate-700">
               <span id="redeemTimestampText" class="text-slate-300">時間：--</span>
@@ -447,7 +447,7 @@
       </div>
       <div>
         <h3 class="text-base font-black text-slate-900">工作人員兌獎核銷</h3>
-        <p class="text-xs text-slate-500 mt-1">請確認玩家已收集 A、B、C 三區並完成紀念卡，輸入工作人員密碼後此手機將永久鎖定為已兌換：</p>
+        <p class="text-xs text-slate-500 mt-1">請確認玩家已收集 A、B、C 三區並完成紀念卡，輸入工作人員密碼後即完成核銷：</p>
       </div>
       <div>
         <input type="password" inputmode="numeric" id="staffPinInput" placeholder="請輸入核銷密碼" class="w-full text-center tracking-widest text-base font-black bg-slate-50 border-2 border-slate-200 focus:border-emerald-500 rounded-xl py-2.5 px-3 focus:outline-none">
@@ -490,7 +490,7 @@
         </div>
         <div class="bg-emerald-50/80 p-3 rounded-2xl border border-emerald-200">
           <div class="font-black text-emerald-900 mb-0.5">STEP 04｜服務台核銷換小禮物 🎁</div>
-          <p>完成專屬紀念卡後，前往服務台出示畫面由工作人員輸入密碼核銷，即可兌換小禮物（每支手機限領一次）。</p>
+          <p>完成專屬紀念卡後，前往服務台出示畫面由工作人員輸入密碼核銷，即可兌換小禮物。</p>
         </div>
         <div class="bg-slate-100 p-2.5 rounded-xl text-[11px] text-slate-500 flex items-start gap-1.5">
           <span>💡</span>
@@ -1345,7 +1345,7 @@
       closeStaffRedeemModal();
       renderRedeemUI();
       triggerConfetti();
-      showToast("🎉 核銷成功！此手機已鎖定為已兌換");
+      showToast("🎉 核銷成功！");
     }
 
     /* =====================================================================
@@ -2108,7 +2108,9 @@
       renderAllTabs();
       checkUrlParametersForAutoCollect();
       checkAndShowFirstTimeRules();
-      if (window.lucide) lucide.createIcons();
+      if (window.lucide) {
+        lucide.createIcons();
+      }
       requestPersistentStorage();
     });
   </script>
